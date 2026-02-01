@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guarantor Confirmation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f7623b;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: #000;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+            color: white;
+        }
+
+        .icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .spinner {
+            border: 4px solid #333;
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        h1 {
+            color: #fff;
+            margin-bottom: 15px;
+            font-size: 28px;
+        }
+
+        p {
+            color: #ddd;
+            line-height: 1.6;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+
+        .info {
+            background: #111;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #f7623b;
+            color: #ccc;
+        }
+
+        .button {
+            display: inline-block;
+            background-color: #f7623b;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .button:hover {
+            background-color: #d5541f;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(247, 98, 59, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loading">
+            <div class="spinner"></div>
+            <h1>Processing...</h1>
+            <p>Confirming guarantor and sending OTP</p>
+        </div>
+
+        <div id="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const pathParts = window.location.pathname.split('/');
+        const guarantorId = pathParts[pathParts.length - 1];
+
+        window.onload = function() {
+            confirmGuarantor();
+        };
+
+        async function confirmGuarantor() {
+            try {
+                const response = await fetch(`/api/guarantor/confirm/${guarantorId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('result').style.display = 'block';
+
+                if (data.success) {
+                    document.getElementById('result').innerHTML = `
+                        <div class="icon">✅</div>
+                        <h1 class="success">Confirmation Successful!</h1>
+                        <p>The guarantor has been confirmed successfully.</p>
+                        <div class="info">
+                            <p><strong>📱 OTP Sent To:</strong> ${data.phoneNumber || 'Guarantor phone'}</p>
+                            <p style="font-size: 14px; color: #aaa; margin-top: 10px;">
+                                The guarantor will receive a 6-digit code via SMS.
+                                The customer needs this code to proceed to the next step.
+                            </p>
+                        </div>
+                        <p>You can close this page now.</p>
+                    `;
+                } else if (data.alreadyConfirmed) {
+                    document.getElementById('result').innerHTML = `
+                        <div class="icon">⚠️</div>
+                        <h1>Already Confirmed</h1>
+                        <p class="error">${data.message}</p>
+                        <div class="info">
+                            <p>This guarantor has already been confirmed and OTP has been sent.</p>
+                            <p style="font-size: 14px; color: #aaa; margin-top: 10px;">
+                                If the customer needs a new OTP, please contact support.
+                            </p>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('result').innerHTML = `
+                        <div class="icon">❌</div>
+                        <h1 class="error">Confirmation Failed</h1>
+                        <p>${data.message || 'An error occurred'}</p>
+                        <div class="info">
+                            <p>Please try again or contact support if the problem persists.</p>
+                        </div>
+                        <a href="javascript:location.reload()" class="button">Try Again</a>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('result').style.display = 'block';
+                document.getElementById('result').innerHTML = `
+                    <div class="icon">❌</div>
+                    <h1 class="error">Connection Error</h1>
+                    <p>Failed to connect to the server.</p>
+                    <div class="info">
+                        <p>Please check your internet connection and try again.</p>
+                    </div>
+                    <a href="javascript:location.reload()" class="button">Try Again</a>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
