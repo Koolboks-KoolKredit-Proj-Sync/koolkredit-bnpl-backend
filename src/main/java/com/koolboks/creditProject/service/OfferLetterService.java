@@ -2,9 +2,11 @@ package com.koolboks.creditProject.service;
 
 import com.koolboks.creditProject.entity.AgentFollowUp;
 import com.koolboks.creditProject.entity.Guarantor;
+import com.koolboks.creditProject.entity.LoanRepayment;
 import com.koolboks.creditProject.repository.GuarantorRepository;
 import com.koolboks.creditProject.service.loan_calculator.LoanCalculatorService;
 import com.koolboks.creditProject.service.loan_calculator.LoanCalculatorService.LoanCalculation;
+import com.koolboks.creditProject.service.loan_repayment_service.LoanRepaymentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +33,11 @@ public class OfferLetterService {
     private final JavaMailSender mailSender;
     private final SmsService smsService;
 
+
+    // Add this field to OfferLetterService
+    private final LoanRepaymentService loanRepaymentService;
+
+
     @Value("${notification.email.from:noreply@koolkredit.com}")
     private String fromEmail;
 
@@ -40,11 +47,12 @@ public class OfferLetterService {
     public OfferLetterService(GuarantorRepository guarantorRepository,
                               LoanCalculatorService loanCalculatorService,
                               JavaMailSender mailSender,
-                              SmsService smsService) {
+                              SmsService smsService, LoanRepaymentService loanRepaymentService) {
         this.guarantorRepository = guarantorRepository;
         this.loanCalculatorService = loanCalculatorService;
         this.mailSender = mailSender;
         this.smsService = smsService;
+        this.loanRepaymentService = loanRepaymentService;
     }
 
     /**
@@ -151,6 +159,22 @@ public class OfferLetterService {
         guarantor.setOfferLetterSentAt(LocalDateTime.now());
         guarantor.setApplicationReference(applicationRef);
         guarantorRepository.save(guarantor);
+
+
+        // ✅ CREATE LOAN REPAYMENT RECORD
+        try {
+            log.info("Creating loan repayment record...");
+            LoanRepayment loanRepayment = loanRepaymentService.createLoanRepayment(
+                guarantor,
+                calculation,
+                applicationRef
+            );
+            log.info("✅ Loan repayment record created with ID: {}", loanRepayment.getId());
+        } catch (Exception e) {
+            log.error("❌ Failed to create loan repayment record (continuing anyway): {}", e.getMessage());
+            // Don't throw - we still want to send emails even if repayment record fails
+        }
+
 
         log.info("Guarantor record updated with offer letter details");
         log.info("=== OFFER LETTER PROCESS COMPLETED SUCCESSFULLY FOR GUARANTOR ID: {} ===", guarantorId);
