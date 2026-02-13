@@ -31,7 +31,8 @@ public class VerificationService {
     @Value("${mono.mashup.url}")
     private String monoApiUrl;
 
-    @Value("${mono.api.key:test_sk_h6nby3di44q76dhb0uha}")
+    //@Value("${mono.api.key:test_sk_h6nby3di44q76dhb0uha}")
+    @Value("${mono.sec.key}")
     private String monoApiKey;
 
     public VerificationService(RestTemplate restTemplate, EmailService emailService,

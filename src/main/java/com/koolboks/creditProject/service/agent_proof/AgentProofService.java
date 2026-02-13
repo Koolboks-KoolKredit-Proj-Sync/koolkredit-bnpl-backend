@@ -305,7 +305,7 @@ public class AgentProofService {
         data.put("payment_date", java.time.LocalDate.now().toString());
         data.put("agent_name", "Agent Name");
         data.put("agent_id", "AGENT-ID");
-        data.put("agent_email", "agent@email.com");
+        data.put("agent_email", "folorunsho@koolboks.com");
         data.put("agent_mobile", "1234567890");
 
         return data;

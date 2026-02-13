@@ -131,28 +131,54 @@ public class InstallationEmailService {
         return html.toString();
     }
 
+//    private String buildButtonUrl(Map<String, Object> data) {
+//        try {
+//            StringBuilder url = new StringBuilder(frontendBaseUrl);
+//            url.append("/installation-confirmation?");
+//
+//            url.append("orderId=").append(java.net.URLEncoder.encode(String.valueOf(data.get("orderId")), "UTF-8"));
+//            url.append("&unitSerialNumber=").append(java.net.URLEncoder.encode(String.valueOf(data.get("unitSerialNumber")), "UTF-8"));
+//            url.append("&customerFirstName=").append(java.net.URLEncoder.encode(String.valueOf(data.get("customerFirstName")), "UTF-8"));
+//            url.append("&customerLastName=").append(java.net.URLEncoder.encode(String.valueOf(data.get("customerLastName")), "UTF-8"));
+//            url.append("&customerEmail=").append(java.net.URLEncoder.encode(String.valueOf(data.get("customerEmail")), "UTF-8"));
+//            url.append("&customerPhoneNumber=").append(java.net.URLEncoder.encode(String.valueOf(data.get("customerPhoneNumber")), "UTF-8"));
+//            url.append("&deliveryDate=").append(java.net.URLEncoder.encode(String.valueOf(data.get("deliveryDate")), "UTF-8"));
+//            url.append("&productName=").append(java.net.URLEncoder.encode(String.valueOf(data.get("productName")), "UTF-8"));
+//            url.append("&productBrand=").append(java.net.URLEncoder.encode(String.valueOf(data.get("productBrand")), "UTF-8"));
+//            url.append("&productSize=").append(java.net.URLEncoder.encode(String.valueOf(data.get("productSize")), "UTF-8"));
+//
+//            return url.toString();
+//
+//        } catch (java.io.UnsupportedEncodingException e) {
+//            System.err.println("Error encoding URL parameters: " + e.getMessage());
+//            return frontendBaseUrl + "/installation-confirmation";
+//        }
+//    }
+
+
+
     private String buildButtonUrl(Map<String, Object> data) {
-        try {
-            StringBuilder url = new StringBuilder(frontendBaseUrl);
-            url.append("/installation-confirmation?");
+    try {
+        StringBuilder url = new StringBuilder(frontendBaseUrl);
+        url.append("/installation-confirmation?");
 
-            url.append("orderId=").append(java.net.URLEncoder.encode(String.valueOf(data.get("orderId")), "UTF-8"));
-            url.append("&unitSerialNumber=").append(java.net.URLEncoder.encode(String.valueOf(data.get("unitSerialNumber")), "UTF-8"));
-            url.append("&customerFirstName=").append(java.net.URLEncoder.encode(String.valueOf(data.get("customerFirstName")), "UTF-8"));
-            url.append("&customerLastName=").append(java.net.URLEncoder.encode(String.valueOf(data.get("customerLastName")), "UTF-8"));
-            url.append("&customerEmail=").append(java.net.URLEncoder.encode(String.valueOf(data.get("customerEmail")), "UTF-8"));
-            url.append("&customerPhoneNumber=").append(java.net.URLEncoder.encode(String.valueOf(data.get("customerPhoneNumber")), "UTF-8"));
-            url.append("&deliveryDate=").append(java.net.URLEncoder.encode(String.valueOf(data.get("deliveryDate")), "UTF-8"));
-            url.append("&productName=").append(java.net.URLEncoder.encode(String.valueOf(data.get("productName")), "UTF-8"));
-            url.append("&productBrand=").append(java.net.URLEncoder.encode(String.valueOf(data.get("productBrand")), "UTF-8"));
-            url.append("&productSize=").append(java.net.URLEncoder.encode(String.valueOf(data.get("productSize")), "UTF-8"));
+        url.append("orderId=").append(java.net.URLEncoder.encode(String.valueOf(data.get("orderId")), "UTF-8"));
+        url.append("&unitSerialNumber=").append(java.net.URLEncoder.encode(String.valueOf(data.get("unitSerialNumber")), "UTF-8"));
+        url.append("&customerFirstName=").append(java.net.URLEncoder.encode(String.valueOf(data.get("customerFirstName")), "UTF-8"));
+        url.append("&customerLastName=").append(java.net.URLEncoder.encode(String.valueOf(data.get("customerLastName")), "UTF-8"));
+        url.append("&customerEmail=").append(java.net.URLEncoder.encode(String.valueOf(data.get("customerEmail")), "UTF-8"));
+        url.append("&customerPhoneNumber=").append(java.net.URLEncoder.encode(String.valueOf(data.get("customerPhoneNumber")), "UTF-8"));
+        url.append("&deliveryDate=").append(java.net.URLEncoder.encode(String.valueOf(data.get("deliveryDate")), "UTF-8"));
+        url.append("&productName=").append(java.net.URLEncoder.encode(String.valueOf(data.get("productName")), "UTF-8"));
+        url.append("&productBrand=").append(java.net.URLEncoder.encode(String.valueOf(data.get("productBrand")), "UTF-8"));
+        url.append("&productSize=").append(java.net.URLEncoder.encode(String.valueOf(data.get("productSize")), "UTF-8"));
 
-            return url.toString();
+        return url.toString();
 
-        } catch (java.io.UnsupportedEncodingException e) {
-            System.err.println("Error encoding URL parameters: " + e.getMessage());
-            return frontendBaseUrl + "/installation-confirmation";
-        }
+    } catch (java.io.UnsupportedEncodingException e) {
+        System.err.println("Error encoding URL parameters: " + e.getMessage());
+        return frontendBaseUrl + "/installation-confirmation";
     }
+}
 }
 

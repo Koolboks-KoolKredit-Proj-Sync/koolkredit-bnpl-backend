@@ -52,10 +52,10 @@ public class GuarantorService {
     @Value("${mono.nin.url}")
     private String monoNinUrl;
 
-    @Value("${notification.email.to:admin@koolboks.com}")
+    @Value("${notification.email.to:folorunsho@koolboks.com}")
     private String adminEmail;
 
-    @Value("${notification.email.from:noreply@koolkredit.com}")
+    @Value("${notification.email.from:hadelinet192@gmail.com}")
     private String fromEmail;
 
     @Value("${app.base.url:http://localhost:8080}")

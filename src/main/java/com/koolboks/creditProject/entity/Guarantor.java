@@ -13,7 +13,7 @@ public class Guarantor {
     private Long id;
 
     // Customer Information (from AgentEntryForm + AgentFollowUpForm)
-    @Column(name = "customer_bvn", nullable = false)
+    @Column(name = "customer_bvn", nullable = true)
     private String customerBvn;
 
     @Column(name = "customer_first_name")
@@ -48,10 +48,10 @@ public class Guarantor {
     private BigDecimal storePrice;
 
     // Guarantor Information
-    @Column(name = "guarantor_bvn", nullable = false)
+    @Column(name = "guarantor_bvn", nullable = true)
     private String guarantorBvn;
 
-    @Column(name = "guarantor_phone_number", nullable = false)
+    @Column(name = "guarantor_phone_number", nullable = true)
     private String guarantorPhoneNumber;
 
     @Column(name = "guarantor_nin")
