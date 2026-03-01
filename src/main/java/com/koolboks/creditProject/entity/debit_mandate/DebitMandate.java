@@ -379,7 +379,7 @@ public class DebitMandate {
     private String customer_phone;
 
     @Column(name = "verification_method")
-    private String verification_method = "selfie_verification";
+    private String verification_method;
 
     @Column(name = "mandate_id")
     private String mandate_id;

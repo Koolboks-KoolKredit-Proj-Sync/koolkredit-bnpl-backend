@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: koolkredit-springboot
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: frankfurt
+    branch: master
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DATABASE_URL
+        value: jdbc:postgresql://dpg-YOUR-DB-HOST/YOUR-DB-NAME
+      - key: DATABASE_USERNAME
+        value: YOUR-DB-USER
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: MONO_SECRET_KEY
+        value: live_sk_z2zqd4k2ayqv9z9t0dqi
+      - key: MONO_PUBLIC_KEY
+        value: live_pk_f1sfmbiu5olyu958z5ne
+      - key: TWILIO_ACCOUNT_SID
+        value: AC95d9e43c08bcdd474bfaa3ac50b3fdbc
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_VERIFY_SID
+        value: VAd2bb8c30b680c550ab21cc2d57929879
+      - key: MAIL_USERNAME
+        value: foltim256@gmail.com
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: NOTIFICATION_EMAIL_TO
+        value: mod.timson@iconicuniversity.edu.ng
+      - key: PAYMENT_URL
+        value: https://your-frontend.vercel.app/pay
+      - key: FRONTEND_URL
+        value: https://your-frontend.vercel.app

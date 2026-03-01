@@ -1,33 +1,75 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+#HELP.md
+#target/
+#.mvn/wrapper/maven-wrapper.jar
+#!**/src/main/**/target/
+#!**/src/test/**/target/
+#
+#### STS ###
+#.apt_generated
+#.classpath
+#.factorypath
+#.project
+#.settings
+#.springBeans
+#.sts4-cache
+#
+#### IntelliJ IDEA ###
+#.idea
+#*.iws
+#*.iml
+#*.ipr
+#
+#### NetBeans ###
+#/nbproject/private/
+#/nbbuild/
+#/dist/
+#/nbdist/
+#/.nb-gradle/
+#build/
+#!**/src/main/**/build/
+#!**/src/test/**/build/
+#
+#### VS Code ###
+#.vscode/
+#
+## Elastic Beanstalk Files
+#.elasticbeanstalk/*
+#!.elasticbeanstalk/*.cfg.yml
+#!.elasticbeanstalk/*.global.yml
+cd ~/Desktop/CreditProject
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# Update .gitignore
+cat > .gitignore << 'EOF'
+# Build files
+target/classes
+target/generated-sources
+target/generated-test-sources
+target/maven-archiver
+target/maven-status
+target/surefire-reports
+target/test-classes
 
-### IntelliJ IDEA ###
-.idea
-*.iws
+# IDE
+.idea/
 *.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
 .vscode/
+.DS_Store
+
+# Sensitive files
+*.env
+.env.*
+application-local.properties
+
+# Uploads (don't commit user uploads)
+uploads/
+
+# EB files
+.elasticbeanstalk/
+.ebignore
+application.jar
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+EOF

@@ -11,10 +11,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.koolboks.creditProject.entity.LoanRepayment;
+import com.koolboks.creditProject.repository.LoanRepaymentRepository;
+import com.koolboks.creditProject.service.loan.LoanActivationEmailService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
+import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class InstallationVerificationService {
@@ -29,6 +33,21 @@ public class InstallationVerificationService {
 
     @Autowired
     private InstallationPinService installationPinService;
+
+    @Autowired
+    private MandatePollingService mandatePollingService;
+
+    @Autowired
+    private LoanRepaymentRepository loanRepaymentRepository;
+
+    @Autowired
+    private LoanActivationEmailService loanActivationEmailService;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Value("${mono.api.key}")
+    private String monoSecretKey;
 
     /**
      * Verify customer details and trigger mandate creation + PIN sending
@@ -93,20 +112,53 @@ public class InstallationVerificationService {
                        mandateResponse.getData().getMandateId());
 
             // Step 4: Check if mandate requires verification
-            if (!mandateResponse.getData().isApproved() || !mandateResponse.getData().isReadyToDebit()) {
-                logger.warn("⚠️ Mandate created but requires customer verification");
 
-                response.put("success", true);
-                response.put("message", mandateResponse.getMessage());
-                response.put("requiresVerification", true);
-                response.put("mandateId", mandateResponse.getData().getMandateId());
-                response.put("status", mandateResponse.getData().getStatus());
-                response.put("transferDestinations", mandateResponse.getData().getTransferDestinations());
-                response.put("customerName", debitMandate.getCustomer_name());
 
-                return response;
-            }
+            // Step 4: Check if mandate requires verification
+if (!mandateResponse.getData().isApproved() || !mandateResponse.getData().isReadyToDebit()) {
+    logger.warn("⚠️ Mandate created but requires customer verification");
 
+    // Map transfer destinations to camelCase for frontend
+    List<Map<String, Object>> destinations = new ArrayList<>();
+    if (mandateResponse.getData().getTransferDestinations() != null) {
+        for (MonoCreateMandateResponse.TransferDestination dest : mandateResponse.getData().getTransferDestinations()) {
+            Map<String, Object> destMap = new HashMap<>();
+            destMap.put("bankName", dest.getBankName());
+            destMap.put("accountNumber", String.valueOf(dest.getAccountNumber()));
+            destMap.put("icon", dest.getIcon());
+            destMap.put("primaryColor", dest.getPrimaryColor());
+            destinations.add(destMap);
+        }
+    }
+
+    response.put("success", true);
+    response.put("message", mandateResponse.getMessage());
+    response.put("requiresVerification", true);
+    response.put("mandateId", mandateResponse.getData().getMandateId());
+    response.put("status", mandateResponse.getData().getStatus());
+    response.put("transferDestinations", destinations);  // ← now camelCase ✅
+    response.put("customerName", debitMandate.getCustomer_name());
+
+    return response;
+}
+
+
+
+
+//            if (!mandateResponse.getData().isApproved() || !mandateResponse.getData().isReadyToDebit()) {
+//                logger.warn("⚠️ Mandate created but requires customer verification");
+//
+//                response.put("success", true);
+//                response.put("message", mandateResponse.getMessage());
+//                response.put("requiresVerification", true);
+//                response.put("mandateId", mandateResponse.getData().getMandateId());
+//                response.put("status", mandateResponse.getData().getStatus());
+//                response.put("transferDestinations", mandateResponse.getData().getTransferDestinations());
+//                response.put("customerName", debitMandate.getCustomer_name());
+//
+//                return response;
+//            }
+//
             // Step 5: If mandate is approved and ready, send PIN
             logger.info("✅ Mandate is approved and ready. Sending installation PIN...");
             sendInstallationPin(debitMandate, dto.getOrderId());
@@ -204,6 +256,76 @@ public class InstallationVerificationService {
         } catch (Exception e) {
             logger.error("❌ Error sending installation PIN", e);
             throw new RuntimeException("Failed to send installation PIN: " + e.getMessage(), e);
+        }
+    }
+
+
+        /**
+     * Start async mandate approval polling after customer confirms transfer
+     */
+    public void startMandateApprovalPolling(String mandateId, String orderId) {
+        logger.info("Starting mandate approval polling for mandateId: {}, orderId: {}",
+            mandateId, orderId);
+
+        // Find the DebitMandate so we can pass customer details to polling
+        debitMandateRepository.findByMandateId(mandateId).ifPresentOrElse(
+            debitMandate -> {
+                // Start polling asynchronously
+                mandatePollingService.pollUntilApprovedWithCustomer(
+                    mandateId,
+                    orderId,
+                    debitMandate
+                );
+            },
+            () -> {
+                logger.error("❌ DebitMandate not found for mandateId: {}", mandateId);
+                throw new RuntimeException("Mandate not found: " + mandateId);
+            }
+        );
+    }
+
+    /**
+     * Activate loan after installer confirms installation with PIN + photo
+     */
+    public void activateLoan(Map<String, Object> data) {
+        String orderId = String.valueOf(data.get("orderId"));
+        logger.info("=== ACTIVATING LOAN FOR ORDER: {} ===", orderId);
+
+        try {
+            // Find LoanRepayment by BVN or email - try both
+            String customerEmail = String.valueOf(data.get("customerEmail"));
+            //Optional<LoanRepayment> loanOpt = loanRepaymentRepository.findByEmail(customerEmail);
+            Optional<LoanRepayment> loanOpt = loanRepaymentRepository.findTopByEmailOrderByIdDesc(customerEmail);
+
+            if (loanOpt.isPresent()) {
+                LoanRepayment loan = loanOpt.get();
+
+                if (loan.getRepaymentStatus() == LoanRepayment.RepaymentStatus.PENDING) {
+                    loan.setRepaymentStatus(LoanRepayment.RepaymentStatus.ACTIVE);
+                    loanRepaymentRepository.save(loan);
+                    logger.info("✅ Loan activated for customer: {}", customerEmail);
+                } else {
+                    logger.info("ℹ️ Loan already has status: {}", loan.getRepaymentStatus());
+                }
+
+                // ✅ FIX: inject the actual loanReference from the found loan into data
+                //data.put("loanReference", loan.getLoanReference()); // ← add this line
+
+                data.put("customerLoanRef", loan.getLoanReference());
+
+                // Send loan activation email
+                loanActivationEmailService.sendLoanActivationEmail(data);
+                logger.info("✅ Loan activation email sent");
+
+            } else {
+                logger.warn("⚠️ No LoanRepayment found for email: {}", customerEmail);
+                // Still send activation email with available data
+                loanActivationEmailService.sendLoanActivationEmail(data);
+            }
+
+        } catch (Exception e) {
+            logger.error("❌ Error activating loan for order: {}", orderId, e);
+            throw new RuntimeException("Failed to activate loan: " + e.getMessage(), e);
         }
     }
 }

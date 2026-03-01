@@ -167,7 +167,7 @@ public class LoanRepaymentService {
      * Get loan repayment by email
      */
     public LoanRepayment getLoanRepaymentByEmail(String email) {
-        return loanRepaymentRepository.findByEmail(email)
+        return loanRepaymentRepository.findTopByEmailOrderByIdDesc(email)
             .orElseThrow(() -> new RuntimeException("Loan repayment not found for email: " + email));
     }
 

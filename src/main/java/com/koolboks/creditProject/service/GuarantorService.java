@@ -795,67 +795,130 @@ public class GuarantorService {
     /**
      * Step 4: Admin confirms guarantor and sends OTP
      */
+//    public Map<String, Object> confirmGuarantor(Long guarantorId) {
+//        Map<String, Object> response = new HashMap<>();
+//
+//        try {
+//            Optional<Guarantor> guarantorOpt = guarantorRepository.findById(guarantorId);
+//
+//            if (guarantorOpt.isEmpty()) {
+//                response.put("success", false);
+//                response.put("message", "Guarantor not found");
+//                return response;
+//            }
+//
+//            Guarantor guarantor = guarantorOpt.get();
+//
+//            if (guarantor.getIsConfirmed()) {
+//                response.put("success", false);
+//                response.put("message", "Guarantor already confirmed");
+//                response.put("alreadyConfirmed", true);
+//                return response;
+//            }
+//
+//            if (!guarantor.getGuarantorFormSubmitted()) {
+//                response.put("success", false);
+//                response.put("message", "Guarantor has not submitted form yet");
+//                return response;
+//            }
+//
+//            // Generate and send OTP
+//            String otp = otpService.sendOtp(guarantor.getGuarantorPhoneNumber());
+//
+//            if (otp == null) {
+//                response.put("success", false);
+//                response.put("message", "Failed to send OTP");
+//                return response;
+//            }
+//
+//            // Update guarantor record
+//            guarantor.setIsConfirmed(true);
+//            guarantor.setConfirmedAt(LocalDateTime.now());
+//            guarantor.setConfirmedBy(adminEmail);
+//            guarantor.setOtpCode(otp);
+//            guarantor.setOtpSentAt(LocalDateTime.now());
+//            guarantor.setOtpVerified(false);
+//
+//            guarantorRepository.save(guarantor);
+//
+//            log.info("Guarantor {} confirmed and OTP sent to {}", guarantorId, guarantor.getGuarantorPhoneNumber());
+//
+//            response.put("success", true);
+//            response.put("message", "Guarantor confirmed and OTP sent successfully");
+//            response.put("phoneNumber", maskPhoneNumber(guarantor.getGuarantorPhoneNumber()));
+//
+//            return response;
+//
+//        } catch (Exception e) {
+//            log.error("Error confirming guarantor: ", e);
+//            response.put("success", false);
+//            response.put("message", "Error: " + e.getMessage());
+//            return response;
+//        }
+//    }
+
+
+
+
     public Map<String, Object> confirmGuarantor(Long guarantorId) {
-        Map<String, Object> response = new HashMap<>();
+    Map<String, Object> response = new HashMap<>();
 
-        try {
-            Optional<Guarantor> guarantorOpt = guarantorRepository.findById(guarantorId);
+    try {
+        Optional<Guarantor> guarantorOpt = guarantorRepository.findById(guarantorId);
 
-            if (guarantorOpt.isEmpty()) {
-                response.put("success", false);
-                response.put("message", "Guarantor not found");
-                return response;
-            }
-
-            Guarantor guarantor = guarantorOpt.get();
-
-            if (guarantor.getIsConfirmed()) {
-                response.put("success", false);
-                response.put("message", "Guarantor already confirmed");
-                response.put("alreadyConfirmed", true);
-                return response;
-            }
-
-            if (!guarantor.getGuarantorFormSubmitted()) {
-                response.put("success", false);
-                response.put("message", "Guarantor has not submitted form yet");
-                return response;
-            }
-
-            // Generate and send OTP
-            String otp = otpService.sendOtp(guarantor.getGuarantorPhoneNumber());
-
-            if (otp == null) {
-                response.put("success", false);
-                response.put("message", "Failed to send OTP");
-                return response;
-            }
-
-            // Update guarantor record
-            guarantor.setIsConfirmed(true);
-            guarantor.setConfirmedAt(LocalDateTime.now());
-            guarantor.setConfirmedBy(adminEmail);
-            guarantor.setOtpCode(otp);
-            guarantor.setOtpSentAt(LocalDateTime.now());
-            guarantor.setOtpVerified(false);
-
-            guarantorRepository.save(guarantor);
-
-            log.info("Guarantor {} confirmed and OTP sent to {}", guarantorId, guarantor.getGuarantorPhoneNumber());
-
-            response.put("success", true);
-            response.put("message", "Guarantor confirmed and OTP sent successfully");
-            response.put("phoneNumber", maskPhoneNumber(guarantor.getGuarantorPhoneNumber()));
-
-            return response;
-
-        } catch (Exception e) {
-            log.error("Error confirming guarantor: ", e);
+        if (guarantorOpt.isEmpty()) {
             response.put("success", false);
-            response.put("message", "Error: " + e.getMessage());
+            response.put("message", "Guarantor not found");
             return response;
         }
+
+        Guarantor guarantor = guarantorOpt.get();
+
+        if (guarantor.getIsConfirmed()) {
+            response.put("success", false);
+            response.put("message", "Guarantor already confirmed");
+            response.put("alreadyConfirmed", true);
+            return response;
+        }
+
+        if (!guarantor.getGuarantorFormSubmitted()) {
+            response.put("success", false);
+            response.put("message", "Guarantor has not submitted form yet");
+            return response;
+        }
+
+        // ✅ Generate and send OTP (will always return an OTP)
+        log.info("📱 Attempting to send OTP to phone: {}", guarantor.getGuarantorPhoneNumber());
+        String otp = otpService.sendOtp(guarantor.getGuarantorPhoneNumber());
+        log.info("📱 OTP service returned: {}", otp);
+
+        // ✅ Save to database regardless of SMS success
+        guarantor.setIsConfirmed(true);
+        guarantor.setConfirmedAt(LocalDateTime.now());
+        guarantor.setConfirmedBy(adminEmail);
+        guarantor.setOtpCode(otp);
+        guarantor.setOtpSentAt(LocalDateTime.now());
+        guarantor.setOtpVerified(false);
+
+        guarantorRepository.save(guarantor);
+        log.info("✅ Guarantor confirmed and OTP saved to database");
+
+        response.put("success", true);
+        response.put("message", "Guarantor confirmed and OTP generated successfully");
+        response.put("phoneNumber", maskPhoneNumber(guarantor.getGuarantorPhoneNumber()));
+
+        // ✅ For testing - remove in production
+        response.put("otpForTesting", otp);
+
+        return response;
+
+    } catch (Exception e) {
+        log.error("Error confirming guarantor: ", e);
+        response.put("success", false);
+        response.put("message", "Error: " + e.getMessage());
+        return response;
     }
+}
 
     /**
      * Step 5: Guarantor verifies OTP
@@ -1178,7 +1241,7 @@ public class GuarantorService {
                 response.put("success", true);
                 response.put("status", "VERIFIED");
                 response.put("message", "Guarantor verified successfully");
-                response.put("verifiedAt", guarantor.getOtpVerifiedAt());
+                response.put("verifiedAt", guarantor.getOtpVerifiedAt().toString());
                 return response;
             }
 

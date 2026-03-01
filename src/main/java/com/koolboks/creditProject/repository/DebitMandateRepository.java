@@ -107,6 +107,7 @@
 
 package com.koolboks.creditProject.repository;
 
+import com.koolboks.creditProject.entity.LoanRepayment;
 import com.koolboks.creditProject.entity.debit_mandate.DebitMandate;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -152,4 +153,10 @@ public interface DebitMandateRepository extends JpaRepository<DebitMandate, Long
      */
     @Query(value = "SELECT * FROM debit_mandate WHERE nip_code IS NOT NULL AND (bank_code IS NULL OR bank_code = '')", nativeQuery = true)
     List<DebitMandate> findAllWithMissingBankCode();
+
+
+    @Query("SELECT d FROM DebitMandate d WHERE d.mandate_id = :mandateId")
+    Optional<DebitMandate> findByMandateId(@Param("mandateId") String mandateId);
+
+
 }

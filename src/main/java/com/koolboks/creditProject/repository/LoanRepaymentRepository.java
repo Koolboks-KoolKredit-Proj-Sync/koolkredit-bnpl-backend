@@ -16,7 +16,11 @@ public interface LoanRepaymentRepository extends JpaRepository<LoanRepayment, Lo
 
     Optional<LoanRepayment> findByCustomerBvn(String customerBvn);
 
-    Optional<LoanRepayment> findByEmail(String email);
+    //Optional<LoanRepayment> findByEmail(String email);
+
+    Optional<LoanRepayment> findTopByEmailOrderByIdDesc(String email);
+
+
 
 
 

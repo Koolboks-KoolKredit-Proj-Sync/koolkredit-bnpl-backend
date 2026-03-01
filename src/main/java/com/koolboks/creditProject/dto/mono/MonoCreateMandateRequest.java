@@ -39,8 +39,8 @@ public class MonoCreateMandateRequest {
     @JsonProperty("end_date")
     private String endDate;
 
-    @JsonProperty("verification_method")
-    private String verificationMethod;
+//    @JsonProperty("verification_method")
+//    private String verificationMethod;
 
     // Constructors
     public MonoCreateMandateRequest() {
@@ -135,11 +135,11 @@ public class MonoCreateMandateRequest {
         this.endDate = endDate;
     }
 
-    public String getVerificationMethod() {
-        return verificationMethod;
-    }
-
-    public void setVerificationMethod(String verificationMethod) {
-        this.verificationMethod = verificationMethod;
-    }
+//    public String getVerificationMethod() {
+//        return verificationMethod;
+//    }
+//
+//    public void setVerificationMethod(String verificationMethod) {
+//        this.verificationMethod = verificationMethod;
+//    }
 }

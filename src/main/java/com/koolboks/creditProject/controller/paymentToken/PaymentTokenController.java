@@ -74,7 +74,7 @@ public class PaymentTokenController {
             response.put("originalAmount", paymentToken.getOriginalAmount());  // Original amount
             response.put("lateFee", paymentToken.getLateFee());  // Late fee amount
             response.put("hasLateFee", paymentToken.getHasLateFee());  // Boolean flag
-            response.put("expiresAt", paymentToken.getExpiresAt());
+            response.put("expiresAt", paymentToken.getExpiresAt().toString());
             response.put("customerName", loan.getFullName());
             response.put("email", loan.getEmail());
             response.put("phone", loan.getPhone());

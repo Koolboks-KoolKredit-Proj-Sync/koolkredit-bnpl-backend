@@ -243,6 +243,15 @@ public class InstallationPinController {
         }
     }
 
+    @GetMapping("/check-pin-ready/{orderId}")
+    public ResponseEntity<?> checkPinReady(@PathVariable String orderId) {
+        Map<String, Object> response = new HashMap<>();
+        boolean isReady = installationPinService.isPinReady(orderId);
+        response.put("success", true);
+        response.put("pinReady", isReady);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/verify-installation-pin")
     public ResponseEntity<?> verifyInstallationPin(@RequestBody Map<String, String> requestData) {
         try {
@@ -285,34 +294,140 @@ public class InstallationPinController {
     /**
  * NEW ENDPOINT: Send mandate verification link to customer
  */
-@PostMapping("/send-verification-link")
-public ResponseEntity<?> sendVerificationLink(@RequestBody Map<String, Object> requestData) {
-    try {
-        String orderId = String.valueOf(requestData.get("orderId"));
-        String customerEmail = String.valueOf(requestData.get("customerEmail"));
-        String customerName = requestData.get("customerFirstName") + " " + requestData.get("customerLastName");
+    @PostMapping("/send-verification-link")
+    public ResponseEntity<?> sendVerificationLink(@RequestBody Map<String, Object> requestData) {
+        try {
+            String orderId = String.valueOf(requestData.get("orderId"));
+            String customerEmail = String.valueOf(requestData.get("customerEmail"));
+            String customerName = requestData.get("customerFirstName") + " " + requestData.get("customerLastName");
 
-        System.out.println("=== SENDING VERIFICATION LINK ===");
-        System.out.println("Order ID: " + orderId);
-        System.out.println("Customer Email: " + customerEmail);
+            System.out.println("=== SENDING VERIFICATION LINK ===");
+            System.out.println("Order ID: " + orderId);
+            System.out.println("Customer Email: " + customerEmail);
 
-        // Send verification link email to customer
-        installationPinService.sendVerificationLinkEmail(customerEmail, orderId, customerName);
+            // Send verification link email to customer
+            installationPinService.sendVerificationLinkEmail(customerEmail, orderId, customerName);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("message", "Verification link sent to customer successfully");
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Verification link sent to customer successfully");
 
-        return ResponseEntity.ok(response);
+            return ResponseEntity.ok(response);
 
-    } catch (Exception e) {
-        System.err.println("Error sending verification link: " + e.getMessage());
-        e.printStackTrace();
+        } catch (Exception e) {
+            System.err.println("Error sending verification link: " + e.getMessage());
+            e.printStackTrace();
 
-        Map<String, String> error = new HashMap<>();
-        error.put("success", "false");
-        error.put("message", "Failed to send verification link: " + e.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+            Map<String, String> error = new HashMap<>();
+            error.put("success", "false");
+            error.put("message", "Failed to send verification link: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
     }
-}
+
+
+        /**
+     * ENDPOINT: Customer confirms transfer completed - starts mandate polling
+     */
+    @PostMapping("/confirm-transfer-completed")
+    public ResponseEntity<?> confirmTransferCompleted(@RequestBody Map<String, String> requestData) {
+        try {
+            String mandateId = requestData.get("mandateId");
+            String orderId = requestData.get("orderId");
+
+            System.out.println("=== TRANSFER COMPLETED CONFIRMED ===");
+            System.out.println("Mandate ID: " + mandateId);
+            System.out.println("Order ID: " + orderId);
+
+            // Start async polling - don't block the response
+            installationVerificationService.startMandateApprovalPolling(mandateId, orderId);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Transfer noted. We will verify your mandate and send your PIN once approved.");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "Failed to process: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
+     * ENDPOINT: Confirm installation - photo upload + loan activation
+     */
+
+
+    @PostMapping("/confirm-installation")
+    public ResponseEntity<?> confirmInstallation(@RequestBody Map<String, Object> requestData) {
+        try {
+            String orderId = String.valueOf(requestData.get("orderId"));
+            String pinCode = String.valueOf(requestData.get("pinCode"));
+
+            // Verify PIN (check only — does NOT delete)
+            boolean isValid = installationPinService.verifyPin(orderId, pinCode);
+            if (!isValid) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("success", false);
+                error.put("message", "Invalid PIN code. Please try again.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            }
+
+            // Activate loan
+            installationVerificationService.activateLoan(requestData);
+
+            // ✅ Now consume (delete) the PIN after successful activation
+            installationPinService.consumePin(orderId);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Installation confirmed! Loan has been activated.");
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "Failed to confirm installation: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+
+
+//    @PostMapping("/confirm-installation")
+//    public ResponseEntity<?> confirmInstallation(@RequestBody Map<String, Object> requestData) {
+//        try {
+//            String orderId = String.valueOf(requestData.get("orderId"));
+//            String pinCode = String.valueOf(requestData.get("pinCode"));
+//
+//            System.out.println("=== CONFIRMING INSTALLATION ===");
+//            System.out.println("Order ID: " + orderId);
+//
+//            // Verify PIN first
+//            boolean isValid = installationPinService.verifyPin(orderId, pinCode);
+//            if (!isValid) {
+//                Map<String, Object> error = new HashMap<>();
+//                error.put("success", false);
+//                error.put("message", "Invalid PIN code. Please try again.");
+//                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+//            }
+//
+//            // Activate loan
+//            installationVerificationService.activateLoan(requestData);
+//
+//            Map<String, Object> response = new HashMap<>();
+//            response.put("success", true);
+//            response.put("message", "Installation confirmed! Loan has been activated.");
+//            return ResponseEntity.ok(response);
+//
+//        } catch (Exception e) {
+//            Map<String, Object> error = new HashMap<>();
+//            error.put("success", false);
+//            error.put("message", "Failed to confirm installation: " + e.getMessage());
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+//        }
+//    }
 }

@@ -216,7 +216,9 @@ public class InstallationPinService {
     private String frontendBaseUrl;
 
     // Store PINs in memory (use Redis in production)
-    private final Map<String, String> pinStore = new ConcurrentHashMap<>();
+    //private final Map<String, String> pinStore = new ConcurrentHashMap<>();
+
+    private static final Map<String, String> pinStore = new ConcurrentHashMap<>();
 
     /**
      * Generate 6-digit PIN
@@ -232,14 +234,28 @@ public class InstallationPinService {
     /**
      * Verify PIN
      */
+    // Check PIN without deleting it
     public boolean verifyPin(String orderId, String providedPin) {
         String storedPin = pinStore.get(orderId);
-        if (storedPin != null && storedPin.equals(providedPin)) {
-            pinStore.remove(orderId); // Remove after successful verification
-            return true;
-        }
-        return false;
+        return storedPin != null && storedPin.equals(providedPin);
     }
+
+    // Delete PIN after final confirmation
+    public void consumePin(String orderId) {
+        pinStore.remove(orderId);
+        System.out.println("PIN consumed for order: " + orderId);
+    }
+
+
+
+//    public boolean verifyPin(String orderId, String providedPin) {
+//        String storedPin = pinStore.get(orderId);
+//        if (storedPin != null && storedPin.equals(providedPin)) {
+//            pinStore.remove(orderId); // Remove after successful verification
+//            return true;
+//        }
+//        return false;
+//    }
 
     /**
      * NEW: Send verification link to customer email
@@ -291,6 +307,10 @@ public class InstallationPinService {
             e.printStackTrace();
         }
     }
+
+    public boolean isPinReady(String orderId) {
+    return pinStore.containsKey(orderId);
+}
 
     /**
      * Send PIN via SMS (Twilio)
