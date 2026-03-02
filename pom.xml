@@ -61,7 +61,7 @@
             <artifactId>flyway-core</artifactId>
         </dependency>
 
-        <!-- DevTools (optional) -->
+        <!-- DevTools -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
@@ -76,70 +76,55 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Twilio -->
         <dependency>
             <groupId>com.twilio.sdk</groupId>
             <artifactId>twilio</artifactId>
             <version>10.0.0</version>
         </dependency>
 
-        <!-- Thymeleaf (optional, for template engine) -->
+        <!-- Thymeleaf -->
         <dependency>
-              <groupId>org.springframework.boot</groupId>
-              <artifactId>spring-boot-thymeleaf</artifactId>
-              <version>4.0.2</version>
-              <scope>compile</scope>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
 
-
+        <!-- iText PDF -->
         <dependency>
             <groupId>com.lowagie</groupId>
             <artifactId>itext</artifactId>
             <version>2.1.7</version>
         </dependency>
 
-
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
-
+        <!-- Jackson JSR310 (Java 8 Date/Time) -->
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
 
-
-
-
-
-
+        <!-- OpenAPI / Swagger UI -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>2.3.0</version>
         </dependency>
 
-
+        <!-- Actuator -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
-
-
-
-
-
     </dependencies>
 
     <build>
         <plugins>
+
+            <!-- Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version> <!-- Always specify a recent version -->
+                <version>3.11.0</version>
                 <configuration>
                     <source>21</source>
                     <target>21</target>
@@ -149,8 +134,185 @@
                 </configuration>
             </plugin>
 
+            <!-- ✅ Spring Boot Plugin - Required to build executable JAR -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <jvmArguments>--enable-preview</jvmArguments>
+                </configuration>
+            </plugin>
 
         </plugins>
     </build>
 
 </project>
+
+
+
+
+
+
+
+
+<!--<?xml version="1.0" encoding="UTF-8"?>-->
+<!--<project xmlns="http://maven.apache.org/POM/4.0.0"-->
+<!--         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"-->
+<!--         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0-->
+<!--         https://maven.apache.org/xsd/maven-4.0.0.xsd">-->
+
+<!--    <modelVersion>4.0.0</modelVersion>-->
+
+<!--    <parent>-->
+<!--        <groupId>org.springframework.boot</groupId>-->
+<!--        <artifactId>spring-boot-starter-parent</artifactId>-->
+<!--        <version>3.3.4</version>-->
+<!--        <relativePath/>-->
+<!--    </parent>-->
+
+<!--    <groupId>com.koolboks</groupId>-->
+<!--    <artifactId>CreditProject</artifactId>-->
+<!--    <version>0.0.1-SNAPSHOT</version>-->
+<!--    <name>CreditProject</name>-->
+<!--    <description>Middleware project for Credit</description>-->
+
+<!--    <properties>-->
+<!--        <java.version>21</java.version>-->
+<!--    </properties>-->
+
+<!--    <dependencies>-->
+<!--        &lt;!&ndash; REST API &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-web</artifactId>-->
+<!--        </dependency>-->
+
+<!--        &lt;!&ndash; JPA / Hibernate &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-data-jpa</artifactId>-->
+<!--        </dependency>-->
+
+<!--        &lt;!&ndash; PostgreSQL driver &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.postgresql</groupId>-->
+<!--            <artifactId>postgresql</artifactId>-->
+<!--            <scope>runtime</scope>-->
+<!--        </dependency>-->
+
+<!--        &lt;!&ndash; Validation &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-validation</artifactId>-->
+<!--        </dependency>-->
+
+<!--        &lt;!&ndash; Email &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-mail</artifactId>-->
+<!--        </dependency>-->
+
+<!--        &lt;!&ndash; Flyway migrations &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.flywaydb</groupId>-->
+<!--            <artifactId>flyway-core</artifactId>-->
+<!--        </dependency>-->
+
+<!--        &lt;!&ndash; DevTools (optional) &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-devtools</artifactId>-->
+<!--            <scope>runtime</scope>-->
+<!--            <optional>true</optional>-->
+<!--        </dependency>-->
+
+<!--        &lt;!&ndash; Test &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-test</artifactId>-->
+<!--            <scope>test</scope>-->
+<!--        </dependency>-->
+
+<!--        <dependency>-->
+<!--            <groupId>com.twilio.sdk</groupId>-->
+<!--            <artifactId>twilio</artifactId>-->
+<!--            <version>10.0.0</version>-->
+<!--        </dependency>-->
+
+<!--        &lt;!&ndash; Thymeleaf (optional, for template engine) &ndash;&gt;-->
+<!--        <dependency>-->
+<!--              <groupId>org.springframework.boot</groupId>-->
+<!--              <artifactId>spring-boot-thymeleaf</artifactId>-->
+<!--              <version>4.0.2</version>-->
+<!--              <scope>compile</scope>-->
+<!--        </dependency>-->
+
+
+<!--        <dependency>-->
+<!--            <groupId>com.lowagie</groupId>-->
+<!--            <artifactId>itext</artifactId>-->
+<!--            <version>2.1.7</version>-->
+<!--        </dependency>-->
+
+
+<!--        <dependency>-->
+<!--            <groupId>org.postgresql</groupId>-->
+<!--            <artifactId>postgresql</artifactId>-->
+<!--            <scope>runtime</scope>-->
+<!--        </dependency>-->
+
+
+<!--        <dependency>-->
+<!--            <groupId>com.fasterxml.jackson.datatype</groupId>-->
+<!--            <artifactId>jackson-datatype-jsr310</artifactId>-->
+<!--        </dependency>-->
+
+
+
+
+
+
+<!--        <dependency>-->
+<!--            <groupId>org.springdoc</groupId>-->
+<!--            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>-->
+<!--            <version>2.3.0</version>-->
+<!--        </dependency>-->
+
+
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-actuator</artifactId>-->
+<!--        </dependency>-->
+
+
+
+
+
+
+<!--    </dependencies>-->
+
+<!--    <build>-->
+<!--        <plugins>-->
+<!--            <plugin>-->
+<!--                <groupId>org.apache.maven.plugins</groupId>-->
+<!--                <artifactId>maven-compiler-plugin</artifactId>-->
+<!--                <version>3.11.0</version> &lt;!&ndash; Always specify a recent version &ndash;&gt;-->
+<!--                <configuration>-->
+<!--                    <source>21</source>-->
+<!--                    <target>21</target>-->
+<!--                    <compilerArgs>-->
+<!--                        <arg>&#45;&#45;enable-preview</arg>-->
+<!--                    </compilerArgs>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
+
+<!--            <plugin>-->
+<!--                <groupId>org.springframework.boot</groupId>-->
+<!--                <artifactId>spring-boot-maven-plugin</artifactId>-->
+<!--            </plugin>-->
+
+
+<!--        </plugins>-->
+<!--    </build>-->
+
+<!--</project>-->
