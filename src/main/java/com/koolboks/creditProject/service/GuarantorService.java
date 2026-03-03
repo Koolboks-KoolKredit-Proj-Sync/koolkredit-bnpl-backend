@@ -58,12 +58,16 @@ public class GuarantorService {
     @Value("${notification.email.from:hadelinet192@gmail.com}")
     private String fromEmail;
 
-    @Value("${app.base.url:http://localhost:8080}")
+    //@Value("${app.base.url:http://localhost:8080}")
     //@Value("${app.base.url:https://bde9122e7fd0.ngrok-free.app}")
+    @Value("${app.base.url:https://web-production-9f730.up.railway.app}")
     private String appBaseUrl;
 
-    @Value("${frontend.base.url:http://localhost:5173}")
+//    @Value("${frontend.base.url:http://localhost:5173}
+
+
     //@Value("${frontend.base.url:https://4629bd22e20c.ngrok-free.app}")
+    @Value("${frontend.base.url:https://koolkredit-bnpl-frontend.vercel.app}")
     private String frontendBaseUrl;
 
 

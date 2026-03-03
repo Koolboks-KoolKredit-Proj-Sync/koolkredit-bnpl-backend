@@ -78,8 +78,8 @@ public class LoanCalculatorService {
         switch (plan) {
             case "Easy 35":
                 return new BigDecimal("0.35");
-            case "Easy 20":
-                return new BigDecimal("0.20");
+            case "Easy 25":
+                return new BigDecimal("0.25");
             case "Omolope":
                 return new BigDecimal("0.25");
             case "OutrightFlex":

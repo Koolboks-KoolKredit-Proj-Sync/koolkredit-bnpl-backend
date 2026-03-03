@@ -439,7 +439,8 @@ public class AgentProofService {
         emailData.put("productName", disbursement.getProductName());
         emailData.put("productBrand", disbursement.getProductBrand());
         emailData.put("productSize", disbursement.getProductSize());
-        emailData.put("confirmationUrl", "http://your-domain.com/api/v1/confirm-paygo/" + disbursement.getId());
+       // emailData.put("confirmationUrl", "http://your-domain.com/api/v1/confirm-paygo/" + disbursement.getId());
+        emailData.put("confirmationUrl", "https://web-production-9f730.up.railway.app/api/v1/confirm-paygo/" + disbursement.getId());
         emailData.put("disbursementId", disbursement.getId());
         //emailData.put("isConfigured", true);
 

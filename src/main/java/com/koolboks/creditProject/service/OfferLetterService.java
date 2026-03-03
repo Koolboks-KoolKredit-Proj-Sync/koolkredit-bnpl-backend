@@ -902,7 +902,7 @@ public class OfferLetterService {
     @Value("${notification.email.from:noreply@koolkredit.com}")
     private String fromEmail;
 
-    @Value("${payment.url:https://pay.koolkredit.com}")
+    @Value("${payment.url:https://koolkredit-bnpl-frontend.vercel.app/pay}")
     private String paymentUrl;
 
     public OfferLetterService(GuarantorRepository guarantorRepository,
