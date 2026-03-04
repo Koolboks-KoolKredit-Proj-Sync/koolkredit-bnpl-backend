@@ -899,7 +899,7 @@ public class OfferLetterService {
     private final LoanRepaymentService loanRepaymentService;
     private final DebitMandateService debitMandateService;
 
-    @Value("${notification.email.from:noreply@koolkredit.com}")
+    @Value("${notification.email.from:foltim256@gmail.com}")
     private String fromEmail;
 
     @Value("${payment.url:https://koolkredit-bnpl-frontend.vercel.app/pay}")

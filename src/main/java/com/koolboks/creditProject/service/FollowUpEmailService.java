@@ -12,10 +12,10 @@ public class FollowUpEmailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${notification.email.to:admin@example.com}")
+    @Value("${notification.email.to:foltim256@gmail.com}")
     private String notificationEmail;
 
-    @Value("${notification.email.from:noreply@agententry.com}")
+    @Value("${notification.email.from:foltim256@gmail.com}")
     private String fromEmail;
 
     public FollowUpEmailService(JavaMailSender mailSender) {

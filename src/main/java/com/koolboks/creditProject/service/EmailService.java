@@ -17,10 +17,10 @@ public class EmailService {
     private final JavaMailSender mailSender;
 
     //@Value("${notification.email.to:admin@example.com}")
-    @Value("${notification.email.to:folorunsho@koolboks.com}")
+    @Value("${notification.email.to:foltim256@gmail.com}")
     private String notificationEmail;
 
-    @Value("${notification.email.from:hadelinet192@gmail.com}")
+    @Value("${notification.email.from:foltim256@gmail.com}")
     private String fromEmail;
 
     public EmailService(JavaMailSender mailSender) {
@@ -162,7 +162,7 @@ public class EmailService {
     }
 
     private String getPaymentPlanDetails(AgentEntryRequest request) {
-        if ("Easy 35".equals(request.getPlan()) || "Easy 20".equals(request.getPlan())) {
+        if ("Easy 35".equals(request.getPlan()) || "Easy 25".equals(request.getPlan())) {
             return "Installment Duration: " + request.getInstallmentDuration() + " months";
         } else if ("Omolope".equals(request.getPlan())) {
             return "Duration: " + request.getOmolopeDays() + " days";

@@ -55,7 +55,7 @@ public class GuarantorService {
     @Value("${notification.email.to:folorunsho@koolboks.com}")
     private String adminEmail;
 
-    @Value("${notification.email.from:hadelinet192@gmail.com}")
+    @Value("${notification.email.from:foltim256@gmail.com}")
     private String fromEmail;
 
     //@Value("${app.base.url:http://localhost:8080}")

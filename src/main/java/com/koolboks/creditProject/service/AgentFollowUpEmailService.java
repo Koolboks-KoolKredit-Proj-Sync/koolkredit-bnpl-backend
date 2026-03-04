@@ -16,10 +16,10 @@ public class AgentFollowUpEmailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${notification.email.to:admin@example.com}")
+    @Value("${notification.email.to:foltim256@gmail.com}")
     private String notificationEmail;
 
-    @Value("${notification.email.from:noreply@agententry.com}")
+    @Value("${notification.email.from:foltim256@gmail.com}")
     private String fromEmail;
 
     public AgentFollowUpEmailService(JavaMailSender mailSender) {
