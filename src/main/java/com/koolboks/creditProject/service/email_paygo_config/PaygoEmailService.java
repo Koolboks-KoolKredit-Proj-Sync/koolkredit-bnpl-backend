@@ -701,6 +701,7 @@
 
 package com.koolboks.creditProject.service.email_paygo_config;
 
+import com.koolboks.creditProject.service.BrevoEmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -712,81 +713,119 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Map;
 
+
 @Service
 public class PaygoEmailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+    private final BrevoEmailService brevoEmailService;
 
     @Value("${after.sales.team.email}")
     private String afterSalesTeamEmail;
 
-    @Value("${notification.email.from}")
-    private String fromEmail;
-
     @Value("${frontend.base.url}")
     private String frontendBaseUrl;
 
-    /**
-     * Send Paygo Configuration Email to After Sales Team
-     */
-    public void sendPaygoConfigurationEmail(Map<String, Object> emailData) {
-        try {
-            System.out.println("=== PAYGO EMAIL DEBUG START ===");
-            System.out.println("From: " + fromEmail);
-            System.out.println("To: " + afterSalesTeamEmail);
-            System.out.println("Frontend URL: " + frontendBaseUrl);
-
-            // Debug all email data
-            System.out.println("\n=== Email Data ===");
-            emailData.forEach((key, value) ->
-                System.out.println(key + ": " + value)
-            );
-
-            // Validate required fields
-            if (emailData.get("customerLoanRef") == null) {
-                System.err.println("ERROR: customerLoanRef is null!");
-                return;
-            }
-
-            System.out.println("\n=== Creating email message ===");
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setFrom(fromEmail);
-            helper.setTo(afterSalesTeamEmail);
-
-            String subject = "🔔 Store Payment Confirmed - Paygo Configuration Required - Loan Ref: "
-                + emailData.get("customerLoanRef");
-            helper.setSubject(subject);
-            System.out.println("Subject: " + subject);
-
-            System.out.println("\n=== Building HTML content ===");
-            String htmlContent = buildEmailContent(emailData);
-            System.out.println("HTML content length: " + htmlContent.length() + " characters");
-            System.out.println("First 300 chars of HTML: " +
-                htmlContent.substring(0, Math.min(300, htmlContent.length())));
-
-            helper.setText(htmlContent, true);
-
-            System.out.println("\n=== Attempting to send email ===");
-            mailSender.send(message);
-
-            System.out.println("✅ SUCCESS: Email sent for loan ref: " + emailData.get("customerLoanRef"));
-            System.out.println("=== PAYGO EMAIL DEBUG END ===\n");
-
-        } catch (MessagingException e) {
-            System.err.println("❌ MESSAGING EXCEPTION:");
-            System.err.println("Error: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Failed to send paygo email", e);
-        } catch (Exception e) {
-            System.err.println("❌ UNEXPECTED EXCEPTION:");
-            System.err.println("Error: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Failed to prepare paygo email", e);
-        }
+    public PaygoEmailService(BrevoEmailService brevoEmailService) {
+        this.brevoEmailService = brevoEmailService;
     }
+
+    public void sendPaygoConfigurationEmail(Map<String, Object> emailData) {
+        System.out.println("=== PAYGO EMAIL DEBUG START ===");
+        System.out.println("To: " + afterSalesTeamEmail);
+
+        if (emailData.get("customerLoanRef") == null) {
+            System.err.println("ERROR: customerLoanRef is null!");
+            return;
+        }
+
+        String htmlContent = buildEmailContent(emailData);
+        brevoEmailService.sendEmail(
+            afterSalesTeamEmail,
+            "After Sales Team",
+            "🔔 Store Payment Confirmed - Paygo Configuration Required - Loan Ref: " + emailData.get("customerLoanRef"),
+            htmlContent
+        );
+        System.out.println("✅ Paygo email sent for loan ref: " + emailData.get("customerLoanRef"));
+    }
+
+    // keep buildEmailContent, safeGet, buildButtonUrl, buildSection unchanged
+
+
+//@Service
+//public class PaygoEmailService {
+//
+//    @Autowired
+//    private JavaMailSender mailSender;
+//
+//    @Value("${after.sales.team.email}")
+//    private String afterSalesTeamEmail;
+//
+//    @Value("${notification.email.from}")
+//    private String fromEmail;
+//
+//    @Value("${frontend.base.url}")
+//    private String frontendBaseUrl;
+//
+//    /**
+//     * Send Paygo Configuration Email to After Sales Team
+//     */
+//    public void sendPaygoConfigurationEmail(Map<String, Object> emailData) {
+//        try {
+//            System.out.println("=== PAYGO EMAIL DEBUG START ===");
+//            System.out.println("From: " + fromEmail);
+//            System.out.println("To: " + afterSalesTeamEmail);
+//            System.out.println("Frontend URL: " + frontendBaseUrl);
+//
+//            // Debug all email data
+//            System.out.println("\n=== Email Data ===");
+//            emailData.forEach((key, value) ->
+//                System.out.println(key + ": " + value)
+//            );
+//
+//            // Validate required fields
+//            if (emailData.get("customerLoanRef") == null) {
+//                System.err.println("ERROR: customerLoanRef is null!");
+//                return;
+//            }
+//
+//            System.out.println("\n=== Creating email message ===");
+//            MimeMessage message = mailSender.createMimeMessage();
+//            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+//
+//            helper.setFrom(fromEmail);
+//            helper.setTo(afterSalesTeamEmail);
+//
+//            String subject = "🔔 Store Payment Confirmed - Paygo Configuration Required - Loan Ref: "
+//                + emailData.get("customerLoanRef");
+//            helper.setSubject(subject);
+//            System.out.println("Subject: " + subject);
+//
+//            System.out.println("\n=== Building HTML content ===");
+//            String htmlContent = buildEmailContent(emailData);
+//            System.out.println("HTML content length: " + htmlContent.length() + " characters");
+//            System.out.println("First 300 chars of HTML: " +
+//                htmlContent.substring(0, Math.min(300, htmlContent.length())));
+//
+//            helper.setText(htmlContent, true);
+//
+//            System.out.println("\n=== Attempting to send email ===");
+//            mailSender.send(message);
+//
+//            System.out.println("✅ SUCCESS: Email sent for loan ref: " + emailData.get("customerLoanRef"));
+//            System.out.println("=== PAYGO EMAIL DEBUG END ===\n");
+//
+//        } catch (MessagingException e) {
+//            System.err.println("❌ MESSAGING EXCEPTION:");
+//            System.err.println("Error: " + e.getMessage());
+//            e.printStackTrace();
+//            throw new RuntimeException("Failed to send paygo email", e);
+//        } catch (Exception e) {
+//            System.err.println("❌ UNEXPECTED EXCEPTION:");
+//            System.err.println("Error: " + e.getMessage());
+//            e.printStackTrace();
+//            throw new RuntimeException("Failed to prepare paygo email", e);
+//        }
+//    }
 
     /**
      * Build HTML email content with null-safe handling

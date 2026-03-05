@@ -10,48 +10,86 @@ import org.springframework.stereotype.Service;
 @Service
 public class FollowUpEmailService {
 
-    private final JavaMailSender mailSender;
+    private final BrevoEmailService brevoEmailService;
 
     @Value("${notification.email.to:foltim256@gmail.com}")
     private String notificationEmail;
 
-    @Value("${notification.email.from:foltim256@gmail.com}")
-    private String fromEmail;
-
-    public FollowUpEmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
+    public FollowUpEmailService(BrevoEmailService brevoEmailService) {
+        this.brevoEmailService = brevoEmailService;
     }
 
     public void sendCrcReportEmail(AgentFollowUpRequest req, JsonNode crcJson, String classification, double dti) {
-        try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(notificationEmail);
-            message.setSubject("Agent Follow-Up CRC Report - " + classification);
+        StringBuilder sb = new StringBuilder();
+        sb.append("Classification: ").append(classification).append("\n");
+        sb.append("DTI (%): ").append(String.format("%.2f", dti)).append("\n\n");
+        sb.append("BVN: ").append(req.getBvn()).append("\n");
+        sb.append("NIN: ").append(req.getNin()).append("\n");
+        sb.append("Mobile: ").append(req.getMobileNumber()).append("\n");
+        sb.append("Usage: ").append(req.getUsageType()).append("\n");
+        sb.append("Monthly Income: ").append(req.getMonthlyIncome()).append("\n");
+        sb.append("Monthly Sales: ").append(req.getMonthlySales()).append("\n\n");
+        sb.append("Full CRC JSON:\n");
+        sb.append(crcJson == null ? "{}" : crcJson.toPrettyString());
 
-            StringBuilder sb = new StringBuilder();
-            sb.append("Classification: ").append(classification).append("\n");
-            sb.append("DTI (%): ").append(String.format("%.2f", dti)).append("\n\n");
-
-            sb.append("Request details:\n");
-            sb.append("BVN: ").append(req.getBvn()).append("\n");
-            sb.append("NIN: ").append(req.getNin()).append("\n");
-            sb.append("Mobile: ").append(req.getMobileNumber()).append("\n");
-            sb.append("Usage: ").append(req.getUsageType()).append("\n");
-            sb.append("Monthly Income: ").append(req.getMonthlyIncome()).append("\n");
-            sb.append("Monthly Sales: ").append(req.getMonthlySales()).append("\n\n");
-
-            sb.append("Full CRC JSON:\n");
-            sb.append(crcJson == null ? "{}" : crcJson.toPrettyString());
-
-            message.setText(sb.toString());
-
-            mailSender.send(message);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        brevoEmailService.sendEmail(
+            notificationEmail,
+            "Admin",
+            "Agent Follow-Up CRC Report - " + classification,
+            sb.toString()
+        );
     }
 }
+
+
+
+
+
+//@Service
+//public class FollowUpEmailService {
+//
+//    private final JavaMailSender mailSender;
+//
+//    @Value("${notification.email.to:foltim256@gmail.com}")
+//    private String notificationEmail;
+//
+//    @Value("${notification.email.from:foltim256@gmail.com}")
+//    private String fromEmail;
+//
+//    public FollowUpEmailService(JavaMailSender mailSender) {
+//        this.mailSender = mailSender;
+//    }
+//
+//    public void sendCrcReportEmail(AgentFollowUpRequest req, JsonNode crcJson, String classification, double dti) {
+//        try {
+//            SimpleMailMessage message = new SimpleMailMessage();
+//            message.setFrom(fromEmail);
+//            message.setTo(notificationEmail);
+//            message.setSubject("Agent Follow-Up CRC Report - " + classification);
+//
+//            StringBuilder sb = new StringBuilder();
+//            sb.append("Classification: ").append(classification).append("\n");
+//            sb.append("DTI (%): ").append(String.format("%.2f", dti)).append("\n\n");
+//
+//            sb.append("Request details:\n");
+//            sb.append("BVN: ").append(req.getBvn()).append("\n");
+//            sb.append("NIN: ").append(req.getNin()).append("\n");
+//            sb.append("Mobile: ").append(req.getMobileNumber()).append("\n");
+//            sb.append("Usage: ").append(req.getUsageType()).append("\n");
+//            sb.append("Monthly Income: ").append(req.getMonthlyIncome()).append("\n");
+//            sb.append("Monthly Sales: ").append(req.getMonthlySales()).append("\n\n");
+//
+//            sb.append("Full CRC JSON:\n");
+//            sb.append(crcJson == null ? "{}" : crcJson.toPrettyString());
+//
+//            message.setText(sb.toString());
+//
+//            mailSender.send(message);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
+//}
 
 
 

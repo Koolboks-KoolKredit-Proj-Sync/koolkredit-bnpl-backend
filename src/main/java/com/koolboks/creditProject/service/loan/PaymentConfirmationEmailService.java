@@ -11,6 +11,7 @@
 
 package com.koolboks.creditProject.service.loan;
 
+import com.koolboks.creditProject.service.BrevoEmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -23,25 +24,20 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+
 @Service
 public class PaymentConfirmationEmailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+    private final BrevoEmailService brevoEmailService;
 
-    @Value("${notification.email.from}")
-    private String fromEmail;
+    public PaymentConfirmationEmailService(BrevoEmailService brevoEmailService) {
+        this.brevoEmailService = brevoEmailService;
+    }
 
-    /**
-     * Send payment confirmation emails to customer, guarantor, and agent SIMULTANEOUSLY
-     */
     public void sendPaymentConfirmationEmails(Map<String, Object> confirmationData) {
         try {
             System.out.println("=== SENDING PAYMENT CONFIRMATION EMAILS ===");
-            System.out.println("Loan Reference: " + confirmationData.get("loanReference"));
-            System.out.println("Instalment Number: " + confirmationData.get("instalmentNumber"));
 
-            // Send all 3 emails in parallel
             CompletableFuture<Void> customerEmail = CompletableFuture.runAsync(() -> {
                 sendCustomerConfirmationEmail(confirmationData);
             });
@@ -54,7 +50,6 @@ public class PaymentConfirmationEmailService {
                 sendAgentConfirmationEmail(confirmationData);
             });
 
-            // Wait for all to complete
             CompletableFuture.allOf(customerEmail, guarantorEmail, agentEmail)
                 .get(20, java.util.concurrent.TimeUnit.SECONDS);
 
@@ -66,92 +61,176 @@ public class PaymentConfirmationEmailService {
         }
     }
 
-    /**
-     * Send confirmation to CUSTOMER
-     */
     private void sendCustomerConfirmationEmail(Map<String, Object> data) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            String customerEmail = (String) data.get("customerEmail");
-            helper.setFrom(fromEmail);
-            helper.setTo(customerEmail);
-
-            String instalmentOrdinal = getOrdinal((Integer) data.get("instalmentNumber"));
-            helper.setSubject("✅ Payment Received - " + instalmentOrdinal + " Instalment Confirmed");
-
-            String htmlContent = buildCustomerConfirmationEmail(data);
-            helper.setText(htmlContent, true);
-
-            mailSender.send(message);
-
-            System.out.println("✅ Customer confirmation email sent to: " + customerEmail);
-
-        } catch (MessagingException e) {
-            System.err.println("Failed to send customer confirmation email: " + e.getMessage());
-            e.printStackTrace();
-        }
+        String instalmentOrdinal = getOrdinal((Integer) data.get("instalmentNumber"));
+        String htmlContent = buildCustomerConfirmationEmail(data);
+        brevoEmailService.sendEmail(
+            (String) data.get("customerEmail"),
+            "Customer",
+            "✅ Payment Received - " + instalmentOrdinal + " Instalment Confirmed",
+            htmlContent
+        );
+        System.out.println("✅ Customer confirmation email sent to: " + data.get("customerEmail"));
     }
 
-    /**
-     * Send confirmation to GUARANTOR
-     */
     private void sendGuarantorConfirmationEmail(Map<String, Object> data) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            String guarantorEmail = (String) data.get("guarantorEmail");
-            helper.setFrom(fromEmail);
-            helper.setTo(guarantorEmail);
-
-            String instalmentOrdinal = getOrdinal((Integer) data.get("instalmentNumber"));
-            helper.setSubject("✅ Payment Received - " + data.get("customerName") + " - " + instalmentOrdinal + " Instalment");
-
-            String htmlContent = buildGuarantorConfirmationEmail(data);
-            helper.setText(htmlContent, true);
-
-            mailSender.send(message);
-
-            System.out.println("✅ Guarantor confirmation email sent to: " + guarantorEmail);
-
-        } catch (MessagingException e) {
-            System.err.println("Failed to send guarantor confirmation email: " + e.getMessage());
-            e.printStackTrace();
-        }
+        String instalmentOrdinal = getOrdinal((Integer) data.get("instalmentNumber"));
+        String htmlContent = buildGuarantorConfirmationEmail(data);
+        brevoEmailService.sendEmail(
+            (String) data.get("guarantorEmail"),
+            "Guarantor",
+            "✅ Payment Received - " + data.get("customerName") + " - " + instalmentOrdinal + " Instalment",
+            htmlContent
+        );
+        System.out.println("✅ Guarantor confirmation email sent to: " + data.get("guarantorEmail"));
     }
 
-    /**
-     * Send confirmation to AGENT
-     */
     private void sendAgentConfirmationEmail(Map<String, Object> data) {
-        try {
-            // Get agent email from payment data
-            // You may need to fetch this from your database
-            String agentEmail = "agent@koolboks.com"; // Replace with actual agent email lookup
-
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setFrom(fromEmail);
-            helper.setTo(agentEmail);
-
-            String instalmentOrdinal = getOrdinal((Integer) data.get("instalmentNumber"));
-            helper.setSubject("📊 Payment Received - " + data.get("customerName") + " - " + instalmentOrdinal + " Instalment");
-
-            String htmlContent = buildAgentConfirmationEmail(data);
-            helper.setText(htmlContent, true);
-
-            mailSender.send(message);
-
-            System.out.println("✅ Agent confirmation email sent to: " + agentEmail);
-
-        } catch (MessagingException e) {
-            System.err.println("Failed to send agent confirmation email: " + e.getMessage());
-            e.printStackTrace();
-        }
+        String instalmentOrdinal = getOrdinal((Integer) data.get("instalmentNumber"));
+        String agentEmail = "agent@koolboks.com";
+        String htmlContent = buildAgentConfirmationEmail(data);
+        brevoEmailService.sendEmail(
+            agentEmail,
+            "Agent",
+            "📊 Payment Received - " + data.get("customerName") + " - " + instalmentOrdinal + " Instalment",
+            htmlContent
+        );
+        System.out.println("✅ Agent confirmation email sent to: " + agentEmail);
     }
+
+    // keep buildCustomerConfirmationEmail, buildGuarantorConfirmationEmail,
+    // buildAgentConfirmationEmail, and getOrdinal unchanged
+
+
+//@Service
+//public class PaymentConfirmationEmailService {
+//
+//    @Autowired
+//    private JavaMailSender mailSender;
+//
+//    @Value("${notification.email.from}")
+//    private String fromEmail;
+//
+//    /**
+//     * Send payment confirmation emails to customer, guarantor, and agent SIMULTANEOUSLY
+//     */
+//    public void sendPaymentConfirmationEmails(Map<String, Object> confirmationData) {
+//        try {
+//            System.out.println("=== SENDING PAYMENT CONFIRMATION EMAILS ===");
+//            System.out.println("Loan Reference: " + confirmationData.get("loanReference"));
+//            System.out.println("Instalment Number: " + confirmationData.get("instalmentNumber"));
+//
+//            // Send all 3 emails in parallel
+//            CompletableFuture<Void> customerEmail = CompletableFuture.runAsync(() -> {
+//                sendCustomerConfirmationEmail(confirmationData);
+//            });
+//
+//            CompletableFuture<Void> guarantorEmail = CompletableFuture.runAsync(() -> {
+//                sendGuarantorConfirmationEmail(confirmationData);
+//            });
+//
+//            CompletableFuture<Void> agentEmail = CompletableFuture.runAsync(() -> {
+//                sendAgentConfirmationEmail(confirmationData);
+//            });
+//
+//            // Wait for all to complete
+//            CompletableFuture.allOf(customerEmail, guarantorEmail, agentEmail)
+//                .get(20, java.util.concurrent.TimeUnit.SECONDS);
+//
+//            System.out.println("=== ALL PAYMENT CONFIRMATION EMAILS SENT ===");
+//
+//        } catch (Exception e) {
+//            System.err.println("Error sending payment confirmation emails: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
+//
+//    /**
+//     * Send confirmation to CUSTOMER
+//     */
+//    private void sendCustomerConfirmationEmail(Map<String, Object> data) {
+//        try {
+//            MimeMessage message = mailSender.createMimeMessage();
+//            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+//
+//            String customerEmail = (String) data.get("customerEmail");
+//            helper.setFrom(fromEmail);
+//            helper.setTo(customerEmail);
+//
+//            String instalmentOrdinal = getOrdinal((Integer) data.get("instalmentNumber"));
+//            helper.setSubject("✅ Payment Received - " + instalmentOrdinal + " Instalment Confirmed");
+//
+//            String htmlContent = buildCustomerConfirmationEmail(data);
+//            helper.setText(htmlContent, true);
+//
+//            mailSender.send(message);
+//
+//            System.out.println("✅ Customer confirmation email sent to: " + customerEmail);
+//
+//        } catch (MessagingException e) {
+//            System.err.println("Failed to send customer confirmation email: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
+//
+//    /**
+//     * Send confirmation to GUARANTOR
+//     */
+//    private void sendGuarantorConfirmationEmail(Map<String, Object> data) {
+//        try {
+//            MimeMessage message = mailSender.createMimeMessage();
+//            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+//
+//            String guarantorEmail = (String) data.get("guarantorEmail");
+//            helper.setFrom(fromEmail);
+//            helper.setTo(guarantorEmail);
+//
+//            String instalmentOrdinal = getOrdinal((Integer) data.get("instalmentNumber"));
+//            helper.setSubject("✅ Payment Received - " + data.get("customerName") + " - " + instalmentOrdinal + " Instalment");
+//
+//            String htmlContent = buildGuarantorConfirmationEmail(data);
+//            helper.setText(htmlContent, true);
+//
+//            mailSender.send(message);
+//
+//            System.out.println("✅ Guarantor confirmation email sent to: " + guarantorEmail);
+//
+//        } catch (MessagingException e) {
+//            System.err.println("Failed to send guarantor confirmation email: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
+//
+//    /**
+//     * Send confirmation to AGENT
+//     */
+//    private void sendAgentConfirmationEmail(Map<String, Object> data) {
+//        try {
+//            // Get agent email from payment data
+//            // You may need to fetch this from your database
+//            String agentEmail = "agent@koolboks.com"; // Replace with actual agent email lookup
+//
+//            MimeMessage message = mailSender.createMimeMessage();
+//            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+//
+//            helper.setFrom(fromEmail);
+//            helper.setTo(agentEmail);
+//
+//            String instalmentOrdinal = getOrdinal((Integer) data.get("instalmentNumber"));
+//            helper.setSubject("📊 Payment Received - " + data.get("customerName") + " - " + instalmentOrdinal + " Instalment");
+//
+//            String htmlContent = buildAgentConfirmationEmail(data);
+//            helper.setText(htmlContent, true);
+//
+//            mailSender.send(message);
+//
+//            System.out.println("✅ Agent confirmation email sent to: " + agentEmail);
+//
+//        } catch (MessagingException e) {
+//            System.err.println("Failed to send agent confirmation email: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
 
     /**
      * Build CUSTOMER confirmation email

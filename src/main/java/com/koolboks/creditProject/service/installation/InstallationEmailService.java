@@ -2,6 +2,7 @@ package com.koolboks.creditProject.service.installation;
 
 
 
+import com.koolboks.creditProject.service.BrevoEmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -14,39 +15,71 @@ import java.util.Map;
 @Service
 public class InstallationEmailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+    private final BrevoEmailService brevoEmailService;
 
     @Value("${installation.team.email}")
     private String installationTeamEmail;
 
-    @Value("${notification.email.from}")
-    private String fromEmail;
-
     @Value("${frontend.base.url}")
     private String frontendBaseUrl;
 
-    public void sendInstallationNotificationEmail(Map<String, Object> deliveryData) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setFrom(fromEmail);
-            helper.setTo(installationTeamEmail);
-            helper.setSubject("🔧 On-Site Installation Required - Order ID: " + deliveryData.get("orderId"));
-
-            String htmlContent = buildInstallationEmailContent(deliveryData);
-            helper.setText(htmlContent, true);
-
-            mailSender.send(message);
-
-            System.out.println("Installation team email sent for order: " + deliveryData.get("orderId"));
-
-        } catch (MessagingException e) {
-            System.err.println("Failed to send installation email: " + e.getMessage());
-            e.printStackTrace();
-        }
+    public InstallationEmailService(BrevoEmailService brevoEmailService) {
+        this.brevoEmailService = brevoEmailService;
     }
+
+    public void sendInstallationNotificationEmail(Map<String, Object> deliveryData) {
+        String htmlContent = buildInstallationEmailContent(deliveryData);
+        brevoEmailService.sendEmail(
+            installationTeamEmail,
+            "Installation Team",
+            "🔧 On-Site Installation Required - Order ID: " + deliveryData.get("orderId"),
+            htmlContent
+        );
+        System.out.println("Installation team email sent for order: " + deliveryData.get("orderId"));
+    }
+
+    // keep buildInstallationEmailContent and buildButtonUrl unchanged
+
+
+
+
+
+//@Service
+//public class InstallationEmailService {
+//
+//    @Autowired
+//    private JavaMailSender mailSender;
+//
+//    @Value("${installation.team.email}")
+//    private String installationTeamEmail;
+//
+//    @Value("${notification.email.from}")
+//    private String fromEmail;
+//
+//    @Value("${frontend.base.url}")
+//    private String frontendBaseUrl;
+//
+//    public void sendInstallationNotificationEmail(Map<String, Object> deliveryData) {
+//        try {
+//            MimeMessage message = mailSender.createMimeMessage();
+//            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+//
+//            helper.setFrom(fromEmail);
+//            helper.setTo(installationTeamEmail);
+//            helper.setSubject("🔧 On-Site Installation Required - Order ID: " + deliveryData.get("orderId"));
+//
+//            String htmlContent = buildInstallationEmailContent(deliveryData);
+//            helper.setText(htmlContent, true);
+//
+//            mailSender.send(message);
+//
+//            System.out.println("Installation team email sent for order: " + deliveryData.get("orderId"));
+//
+//        } catch (MessagingException e) {
+//            System.err.println("Failed to send installation email: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
 
     private String buildInstallationEmailContent(Map<String, Object> data) {
         StringBuilder html = new StringBuilder();

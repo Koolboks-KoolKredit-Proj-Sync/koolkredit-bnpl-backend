@@ -184,6 +184,7 @@
 
 package com.koolboks.creditProject.service.installation;
 
+import com.koolboks.creditProject.service.BrevoEmailService;
 import com.twilio.Twilio;
 import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
@@ -203,8 +204,12 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class InstallationPinService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+//    @Autowired
+//    private JavaMailSender mailSender;
+
+    private final BrevoEmailService brevoEmailService;
+
+
 
     @Value("${notification.email.from}")
     private String fromEmail;
@@ -219,6 +224,12 @@ public class InstallationPinService {
     //private final Map<String, String> pinStore = new ConcurrentHashMap<>();
 
     private static final Map<String, String> pinStore = new ConcurrentHashMap<>();
+
+
+    // Update constructor:
+    public InstallationPinService(BrevoEmailService brevoEmailService) {
+        this.brevoEmailService = brevoEmailService;
+    }
 
     /**
      * Generate 6-digit PIN
@@ -260,53 +271,83 @@ public class InstallationPinService {
     /**
      * NEW: Send verification link to customer email
      */
+
     public void sendVerificationLinkEmail(String email, String orderId, String customerName) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+    String verificationUrl = frontendBaseUrl + "/mandate-form?orderId=" + orderId;
+    String htmlContent = buildVerificationLinkEmail(verificationUrl, orderId, customerName);
+    brevoEmailService.sendEmail(
+        email,
+        customerName,
+        "🔐 Verify Your Mandate - Installation Order " + orderId,
+        htmlContent
+    );
+    System.out.println("Verification link email sent to: " + email);
+}
 
-            helper.setFrom(fromEmail);
-            helper.setTo(email);
-            helper.setSubject("🔐 Verify Your Mandate - Installation Order " + orderId);
 
-            String verificationUrl = frontendBaseUrl + "/mandate-form?orderId=" + orderId;
-            String htmlContent = buildVerificationLinkEmail(verificationUrl, orderId, customerName);
-            helper.setText(htmlContent, true);
 
-            mailSender.send(message);
 
-            System.out.println("Verification link email sent to: " + email);
-
-        } catch (MessagingException e) {
-            System.err.println("Failed to send verification link email: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
+//    public void sendVerificationLinkEmail(String email, String orderId, String customerName) {
+//        try {
+//            MimeMessage message = mailSender.createMimeMessage();
+//            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+//
+//            helper.setFrom(fromEmail);
+//            helper.setTo(email);
+//            helper.setSubject("🔐 Verify Your Mandate - Installation Order " + orderId);
+//
+//            String verificationUrl = frontendBaseUrl + "/mandate-form?orderId=" + orderId;
+//            String htmlContent = buildVerificationLinkEmail(verificationUrl, orderId, customerName);
+//            helper.setText(htmlContent, true);
+//
+//            mailSender.send(message);
+//
+//            System.out.println("Verification link email sent to: " + email);
+//
+//        } catch (MessagingException e) {
+//            System.err.println("Failed to send verification link email: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
 
     /**
      * Send PIN via Email
      */
+
     public void sendPinByEmail(String email, String pin, String orderId, String customerName) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+    String htmlContent = buildPinEmailContent(pin, orderId, customerName);
+    brevoEmailService.sendEmail(
+        email,
+        customerName,
+        "🔐 Installation Verification PIN - Order " + orderId,
+        htmlContent
+    );
+    System.out.println("PIN email sent to: " + email);
+}
 
-            helper.setFrom(fromEmail);
-            helper.setTo(email);
-            helper.setSubject("🔐 Installation Verification PIN - Order " + orderId);
 
-            String htmlContent = buildPinEmailContent(pin, orderId, customerName);
-            helper.setText(htmlContent, true);
 
-            mailSender.send(message);
-
-            System.out.println("PIN email sent to: " + email);
-
-        } catch (MessagingException e) {
-            System.err.println("Failed to send PIN email: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
+//    public void sendPinByEmail(String email, String pin, String orderId, String customerName) {
+//        try {
+//            MimeMessage message = mailSender.createMimeMessage();
+//            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+//
+//            helper.setFrom(fromEmail);
+//            helper.setTo(email);
+//            helper.setSubject("🔐 Installation Verification PIN - Order " + orderId);
+//
+//            String htmlContent = buildPinEmailContent(pin, orderId, customerName);
+//            helper.setText(htmlContent, true);
+//
+//            mailSender.send(message);
+//
+//            System.out.println("PIN email sent to: " + email);
+//
+//        } catch (MessagingException e) {
+//            System.err.println("Failed to send PIN email: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
 
     public boolean isPinReady(String orderId) {
     return pinStore.containsKey(orderId);

@@ -1,6 +1,7 @@
 package com.koolboks.creditProject.service.delivery;
 
 
+import com.koolboks.creditProject.service.BrevoEmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -10,36 +11,66 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.util.Map;
 
+
 @Service
 public class CustomerDeliveryEmailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+    private final BrevoEmailService brevoEmailService;
 
     @Value("${notification.email.from}")
     private String fromEmail;
 
-    public void sendCustomerDeliveryEmail(Map<String, Object> deliveryData) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setFrom(fromEmail);
-            helper.setTo(String.valueOf(deliveryData.get("customerEmail")));
-            helper.setSubject("🚚 Your Delivery is Scheduled - Order ID: " + deliveryData.get("orderId"));
-
-            String htmlContent = buildCustomerEmailContent(deliveryData);
-            helper.setText(htmlContent, true);
-
-            mailSender.send(message);
-
-            System.out.println("Customer delivery email sent to: " + deliveryData.get("customerEmail"));
-
-        } catch (MessagingException e) {
-            System.err.println("Failed to send customer delivery email: " + e.getMessage());
-            e.printStackTrace();
-        }
+    public CustomerDeliveryEmailService(BrevoEmailService brevoEmailService) {
+        this.brevoEmailService = brevoEmailService;
     }
+
+    public void sendCustomerDeliveryEmail(Map<String, Object> deliveryData) {
+        String htmlContent = buildCustomerEmailContent(deliveryData);
+        brevoEmailService.sendEmail(
+            String.valueOf(deliveryData.get("customerEmail")),
+            "Customer",
+            "🚚 Your Delivery is Scheduled - Order ID: " + deliveryData.get("orderId"),
+            htmlContent
+        );
+        System.out.println("Customer delivery email sent to: " + deliveryData.get("customerEmail"));
+    }
+
+    // keep buildCustomerEmailContent unchanged
+
+
+
+
+
+//@Service
+//public class CustomerDeliveryEmailService {
+//
+//    @Autowired
+//    private JavaMailSender mailSender;
+//
+//    @Value("${notification.email.from}")
+//    private String fromEmail;
+//
+//    public void sendCustomerDeliveryEmail(Map<String, Object> deliveryData) {
+//        try {
+//            MimeMessage message = mailSender.createMimeMessage();
+//            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+//
+//            helper.setFrom(fromEmail);
+//            helper.setTo(String.valueOf(deliveryData.get("customerEmail")));
+//            helper.setSubject("🚚 Your Delivery is Scheduled - Order ID: " + deliveryData.get("orderId"));
+//
+//            String htmlContent = buildCustomerEmailContent(deliveryData);
+//            helper.setText(htmlContent, true);
+//
+//            mailSender.send(message);
+//
+//            System.out.println("Customer delivery email sent to: " + deliveryData.get("customerEmail"));
+//
+//        } catch (MessagingException e) {
+//            System.err.println("Failed to send customer delivery email: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
 
     private String buildCustomerEmailContent(Map<String, Object> data) {
         StringBuilder html = new StringBuilder();

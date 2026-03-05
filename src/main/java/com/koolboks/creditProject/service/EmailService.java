@@ -9,45 +9,76 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+
 @Service
 public class EmailService {
 
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
 
-    private final JavaMailSender mailSender;
+    private final BrevoEmailService brevoEmailService;
 
-    //@Value("${notification.email.to:admin@example.com}")
     @Value("${notification.email.to:foltim256@gmail.com}")
     private String notificationEmail;
 
-    @Value("${notification.email.from:foltim256@gmail.com}")
-    private String fromEmail;
-
-    public EmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
+    public EmailService(BrevoEmailService brevoEmailService) {
+        this.brevoEmailService = brevoEmailService;
     }
 
     public void sendVerificationEmail(AgentEntryRequest request, boolean isVerified, String details) {
-        try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(notificationEmail);
+        String subject = isVerified
+            ? "Agent Entry Verification - SUCCESS"
+            : "Agent Entry Verification - FAILED";
 
-            if (isVerified) {
-                message.setSubject(" Agent Entry Verification - SUCCESS");
-                message.setText(buildSuccessEmailBody(request));
-            } else {
-                message.setSubject(" Agent Entry Verification - FAILED");
-                message.setText(buildFailureEmailBody(request, details));
-            }
+        String content = isVerified
+            ? buildSuccessEmailBody(request)
+            : buildFailureEmailBody(request, details);
 
-            mailSender.send(message);
-            log.info("Verification email sent successfully to: {}", notificationEmail);
-
-        } catch (Exception e) {
-            log.error("Error sending email: ", e);
-        }
+        brevoEmailService.sendEmail(notificationEmail, "Admin", subject, content);
+        log.info("Verification email sent to: {}", notificationEmail);
     }
+
+    // keep buildSuccessEmailBody and buildFailureEmailBody and getPaymentPlanDetails unchanged
+
+
+//@Service
+//public class EmailService {
+//
+//    private static final Logger log = LoggerFactory.getLogger(EmailService.class);
+//
+//    private final JavaMailSender mailSender;
+//
+//    //@Value("${notification.email.to:admin@example.com}")
+//    @Value("${notification.email.to:foltim256@gmail.com}")
+//    private String notificationEmail;
+//
+//    @Value("${notification.email.from:foltim256@gmail.com}")
+//    private String fromEmail;
+//
+//    public EmailService(JavaMailSender mailSender) {
+//        this.mailSender = mailSender;
+//    }
+//
+//    public void sendVerificationEmail(AgentEntryRequest request, boolean isVerified, String details) {
+//        try {
+//            SimpleMailMessage message = new SimpleMailMessage();
+//            message.setFrom(fromEmail);
+//            message.setTo(notificationEmail);
+//
+//            if (isVerified) {
+//                message.setSubject(" Agent Entry Verification - SUCCESS");
+//                message.setText(buildSuccessEmailBody(request));
+//            } else {
+//                message.setSubject(" Agent Entry Verification - FAILED");
+//                message.setText(buildFailureEmailBody(request, details));
+//            }
+//
+//            mailSender.send(message);
+//            log.info("Verification email sent successfully to: {}", notificationEmail);
+//
+//        } catch (Exception e) {
+//            log.error("Error sending email: ", e);
+//        }
+//    }
 
     private String buildSuccessEmailBody(AgentEntryRequest request) {
         return String.format("""

@@ -1,6 +1,7 @@
 package com.koolboks.creditProject.service.delivery;
 
 
+import com.koolboks.creditProject.service.BrevoEmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -10,36 +11,65 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.util.Map;
 
+
+
 @Service
 public class AgentDeliveryEmailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+    private final BrevoEmailService brevoEmailService;
 
     @Value("${notification.email.from}")
     private String fromEmail;
 
-    public void sendAgentDeliveryEmail(Map<String, Object> deliveryData) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setFrom(fromEmail);
-            helper.setTo(String.valueOf(deliveryData.get("agentEmail")));
-            helper.setSubject("🚚 Delivery Scheduled - Order ID: " + deliveryData.get("orderId"));
-
-            String htmlContent = buildAgentEmailContent(deliveryData);
-            helper.setText(htmlContent, true);
-
-            mailSender.send(message);
-
-            System.out.println("Agent delivery email sent to: " + deliveryData.get("agentEmail"));
-
-        } catch (MessagingException e) {
-            System.err.println("Failed to send agent delivery email: " + e.getMessage());
-            e.printStackTrace();
-        }
+    public AgentDeliveryEmailService(BrevoEmailService brevoEmailService) {
+        this.brevoEmailService = brevoEmailService;
     }
+
+    public void sendAgentDeliveryEmail(Map<String, Object> deliveryData) {
+        String htmlContent = buildAgentEmailContent(deliveryData);
+        brevoEmailService.sendEmail(
+            String.valueOf(deliveryData.get("agentEmail")),
+            "Agent",
+            "🚚 Delivery Scheduled - Order ID: " + deliveryData.get("orderId"),
+            htmlContent
+        );
+        System.out.println("Agent delivery email sent to: " + deliveryData.get("agentEmail"));
+    }
+
+    // keep buildAgentEmailContent unchanged
+
+
+
+//@Service
+//public class AgentDeliveryEmailService {
+//
+//    @Autowired
+//    private JavaMailSender mailSender;
+//
+//    @Value("${notification.email.from}")
+//    private String fromEmail;
+//
+//    public void sendAgentDeliveryEmail(Map<String, Object> deliveryData) {
+//        try {
+//            MimeMessage message = mailSender.createMimeMessage();
+//            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+//
+//            helper.setFrom(fromEmail);
+//            helper.setTo(String.valueOf(deliveryData.get("agentEmail")));
+//            helper.setSubject("🚚 Delivery Scheduled - Order ID: " + deliveryData.get("orderId"));
+//
+//            String htmlContent = buildAgentEmailContent(deliveryData);
+//            helper.setText(htmlContent, true);
+//
+//            mailSender.send(message);
+//
+//            System.out.println("Agent delivery email sent to: " + deliveryData.get("agentEmail"));
+//
+//        } catch (MessagingException e) {
+//            System.err.println("Failed to send agent delivery email: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
 
     private String buildAgentEmailContent(Map<String, Object> data) {
         StringBuilder html = new StringBuilder();

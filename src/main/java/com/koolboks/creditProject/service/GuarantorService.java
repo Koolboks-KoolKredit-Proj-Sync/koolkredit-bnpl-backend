@@ -79,7 +79,7 @@ public class GuarantorService {
 
 
 
-
+    private final BrevoEmailService brevoEmailService;
 
     // Update the constructor
     public GuarantorService(RestTemplate restTemplate,
@@ -87,7 +87,7 @@ public class GuarantorService {
                             GuarantorRepository guarantorRepository,
                             OtpService otpService,
                             AgentEntryRepository agentEntryRepository,
-                            OfferLetterService offerLetterService, AgentFollowUpService agentFollowUpService) {
+                            OfferLetterService offerLetterService, AgentFollowUpService agentFollowUpService, BrevoEmailService brevoEmailService) {
         this.restTemplate = restTemplate;
         this.mailSender = mailSender;
         this.guarantorRepository = guarantorRepository;
@@ -95,6 +95,7 @@ public class GuarantorService {
         this.otpService = otpService;
         this.offerLetterService = offerLetterService;
         this.agentFollowUpService = agentFollowUpService;
+        this.brevoEmailService = brevoEmailService;
     }
 
 
@@ -811,23 +812,35 @@ public ResponseEntity<Map<String, Object>> getApprovedApplication(@PathVariable 
 //        }
 //    }
 
+//    private void sendGuarantorFormLinkEmail(Guarantor guarantor) {
+//    try {
+//        String formLink = frontendBaseUrl + "/guarantor/form/" + guarantor.getGuarantorToken();
+//        String htmlContent = buildGuarantorFormLinkEmailBody(guarantor, formLink);
+//
+//        sendEmailViaBrevoApi(
+//            guarantor.getGuarantorEmail(),
+//            "Guarantor",
+//            "You've Been Listed as a Guarantor - Action Required",
+//            htmlContent
+//        );
+//
+//        log.info("Guarantor form link sent to: {}", guarantor.getGuarantorEmail());
+//
+//    } catch (Exception e) {
+//        log.error("Error sending guarantor form link email", e);
+//    }
+//}
+
     private void sendGuarantorFormLinkEmail(Guarantor guarantor) {
-    try {
-        String formLink = frontendBaseUrl + "/guarantor/form/" + guarantor.getGuarantorToken();
-        String htmlContent = buildGuarantorFormLinkEmailBody(guarantor, formLink);
-
-        sendEmailViaBrevoApi(
-            guarantor.getGuarantorEmail(),
-            "Guarantor",
-            "You've Been Listed as a Guarantor - Action Required",
-            htmlContent
-        );
-
-        log.info("Guarantor form link sent to: {}", guarantor.getGuarantorEmail());
-
-    } catch (Exception e) {
-        log.error("Error sending guarantor form link email", e);
-    }
+    String formLink = frontendBaseUrl + "/guarantor/form/" + guarantor.getGuarantorToken();
+    String htmlContent = buildGuarantorFormLinkEmailBody(guarantor, formLink);
+    brevoEmailService.sendEmail(
+        guarantor.getGuarantorEmail(),
+        "Guarantor",
+        "You've Been Listed as a Guarantor - Action Required",
+        htmlContent
+    );
+    log.info("Guarantor form link sent to: {}", guarantor.getGuarantorEmail());
 }
 
     private String buildGuarantorFormLinkEmailBody(Guarantor guarantor, String formLink) {
@@ -927,23 +940,36 @@ public ResponseEntity<Map<String, Object>> getApprovedApplication(@PathVariable 
 //    }
 
 
+//    private void sendAdminVerificationEmail(Guarantor guarantor, MonoNinResponse ninResponse) {
+//    try {
+//        String confirmUrl = appBaseUrl + "/api/guarantor/confirm/" + guarantor.getId();
+//        String htmlContent = buildAdminVerificationEmailBody(guarantor, ninResponse, confirmUrl);
+//
+//        sendEmailViaBrevoApi(
+//            adminEmail,
+//            "Admin",
+//            "✓ Guarantor Verification Required - " + guarantor.getCustomerFirstName() + " " + guarantor.getCustomerLastName(),
+//            htmlContent
+//        );
+//
+//        log.info("Admin verification email sent to: {}", adminEmail);
+//
+//    } catch (Exception e) {
+//        log.error("Error sending admin verification email", e);
+//    }
+//}
+
+
     private void sendAdminVerificationEmail(Guarantor guarantor, MonoNinResponse ninResponse) {
-    try {
-        String confirmUrl = appBaseUrl + "/api/guarantor/confirm/" + guarantor.getId();
-        String htmlContent = buildAdminVerificationEmailBody(guarantor, ninResponse, confirmUrl);
-
-        sendEmailViaBrevoApi(
-            adminEmail,
-            "Admin",
-            "✓ Guarantor Verification Required - " + guarantor.getCustomerFirstName() + " " + guarantor.getCustomerLastName(),
-            htmlContent
-        );
-
-        log.info("Admin verification email sent to: {}", adminEmail);
-
-    } catch (Exception e) {
-        log.error("Error sending admin verification email", e);
-    }
+    String confirmUrl = appBaseUrl + "/api/guarantor/confirm/" + guarantor.getId();
+    String htmlContent = buildAdminVerificationEmailBody(guarantor, ninResponse, confirmUrl);
+    brevoEmailService.sendEmail(
+        adminEmail,
+        "Admin",
+        "✓ Guarantor Verification Required - " + guarantor.getCustomerFirstName() + " " + guarantor.getCustomerLastName(),
+        htmlContent
+    );
+    log.info("Admin verification email sent to: {}", adminEmail);
 }
 
     private String buildAdminVerificationEmailBody(Guarantor guarantor, MonoNinResponse ninResponse, String confirmUrl) {
