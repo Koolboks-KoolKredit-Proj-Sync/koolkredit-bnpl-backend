@@ -49,7 +49,7 @@ public class SalesOrderService {
         Font valueFont = new Font(Font.HELVETICA, 10, Font.NORMAL);
 
         // Company Header
-        Paragraph company = new Paragraph("KOOLBOKS", headerFont);
+        Paragraph company = new Paragraph("KOOLBUY", headerFont);
         company.setAlignment(Element.ALIGN_CENTER);
         document.add(company);
 
@@ -130,7 +130,7 @@ public class SalesOrderService {
         String formattedAmount = formatter.format(amount);
 
         Font amountFont = new Font(Font.HELVETICA, 14, Font.BOLD, new Color(247, 98, 59));
-        PdfPCell amountLabelCell = new PdfPCell(new Phrase("Initial Installment:", labelFont));
+        PdfPCell amountLabelCell = new PdfPCell(new Phrase("Total Installment:", labelFont));
         amountLabelCell.setBorder(Rectangle.NO_BORDER);
         amountLabelCell.setPadding(8);
         storeTable.addCell(amountLabelCell);

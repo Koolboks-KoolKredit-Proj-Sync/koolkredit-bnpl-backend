@@ -24,7 +24,7 @@ public class CorsConfig {
                         // 1. Specify Allowed Origins
                         // Since allowCredentials(true) is set, we MUST list explicit origins
                         // and cannot use the wildcard "*".
-                        .allowedOriginPatterns("http://localhost:*", "https://koolkredit-bnpl-frontend.vercel.app")
+                        .allowedOriginPatterns("http://localhost:*", "https://koolkredit-bnpl-frontend.vercel.app", "https://koolkredit-payment-integration-production.up.railway.app")
 
 //                        .allowedOrigins(
 ////                            "http://localhost:5173", // Common for Vite/Frontend development

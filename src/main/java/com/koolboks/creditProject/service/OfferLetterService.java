@@ -1331,7 +1331,7 @@ public class OfferLetterService {
                     </tr>
                     <tr>
                         <td>Default Fee</td>
-                        <td>2%% per missed payment</td>
+                        <td>2.5%% per missed payment</td>
                     </tr>
                     <tr>
                         <td>Total Amount Payable</td>
