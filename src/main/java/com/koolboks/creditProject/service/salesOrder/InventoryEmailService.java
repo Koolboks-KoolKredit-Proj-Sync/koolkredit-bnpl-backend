@@ -2,6 +2,7 @@ package com.koolboks.creditProject.service.salesOrder;
 
 
 
+import com.koolboks.creditProject.service.BrevoEmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -13,45 +14,77 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Map;
 
+
+
+
 @Service
 public class InventoryEmailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+    private final BrevoEmailService brevoEmailService;
 
     @Value("${inventory.team.email}")
     private String inventoryTeamEmail;
 
-    @Value("${notification.email.from}")
-    private String fromEmail;
-
     @Value("${frontend.base.url}")
     private String frontendBaseUrl;
 
-    /**
-     * Send Inventory Confirmation Email
-     */
-    public void sendInventoryConfirmationEmail(Map<String, Object> orderData) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setFrom(fromEmail);
-            helper.setTo(inventoryTeamEmail);
-            helper.setSubject("📦 Stock Confirmation Required - Order ID: " + orderData.get("orderId"));
-
-            String htmlContent = buildInventoryEmailContent(orderData);
-            helper.setText(htmlContent, true);
-
-            mailSender.send(message);
-
-            System.out.println("Inventory confirmation email sent for order: " + orderData.get("orderId"));
-
-        } catch (MessagingException e) {
-            System.err.println("Failed to send inventory email: " + e.getMessage());
-            e.printStackTrace();
-        }
+    public InventoryEmailService(BrevoEmailService brevoEmailService) {
+        this.brevoEmailService = brevoEmailService;
     }
+
+    public void sendInventoryConfirmationEmail(Map<String, Object> orderData) {
+        String htmlContent = buildInventoryEmailContent(orderData);
+        brevoEmailService.sendEmail(
+            inventoryTeamEmail,
+            "Inventory Team",
+            "📦 Stock Confirmation Required - Order ID: " + orderData.get("orderId"),
+            htmlContent
+        );
+        System.out.println("Inventory confirmation email sent for order: " + orderData.get("orderId"));
+    }
+
+    // keep buildInventoryEmailContent, buildButtonUrl, buildSection unchanged
+
+
+//@Service
+//public class InventoryEmailService {
+//
+//    @Autowired
+//    private JavaMailSender mailSender;
+//
+//    @Value("${inventory.team.email}")
+//    private String inventoryTeamEmail;
+//
+//    @Value("${notification.email.from}")
+//    private String fromEmail;
+//
+//    @Value("${frontend.base.url}")
+//    private String frontendBaseUrl;
+//
+//    /**
+//     * Send Inventory Confirmation Email
+//     */
+//    public void sendInventoryConfirmationEmail(Map<String, Object> orderData) {
+//        try {
+//            MimeMessage message = mailSender.createMimeMessage();
+//            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+//
+//            helper.setFrom(fromEmail);
+//            helper.setTo(inventoryTeamEmail);
+//            helper.setSubject("📦 Stock Confirmation Required - Order ID: " + orderData.get("orderId"));
+//
+//            String htmlContent = buildInventoryEmailContent(orderData);
+//            helper.setText(htmlContent, true);
+//
+//            mailSender.send(message);
+//
+//            System.out.println("Inventory confirmation email sent for order: " + orderData.get("orderId"));
+//
+//        } catch (MessagingException e) {
+//            System.err.println("Failed to send inventory email: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
 
     private String buildInventoryEmailContent(Map<String, Object> data) {
         StringBuilder html = new StringBuilder();
