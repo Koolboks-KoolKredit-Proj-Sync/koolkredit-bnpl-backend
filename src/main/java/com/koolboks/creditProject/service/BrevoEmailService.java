@@ -68,4 +68,39 @@ public class BrevoEmailService {
             log.error("Error sending email via Brevo API to: {}", toEmail, e);
         }
     }
+
+
+    public void sendEmailWithAttachment(String toEmail, String toName, String subject,
+                                     String htmlContent, byte[] attachmentBytes,
+                                     String attachmentName) {
+    try {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("api-key", brevoApiKey);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("sender", Map.of("name", "KoolKredit", "email", fromEmail));
+        body.put("to", List.of(Map.of("email", toEmail, "name", toName)));
+        body.put("subject", subject);
+        body.put("htmlContent", htmlContent);
+
+        // Base64 encode the attachment
+        String encodedPdf = java.util.Base64.getEncoder().encodeToString(attachmentBytes);
+        body.put("attachment", List.of(Map.of(
+            "content", encodedPdf,
+            "name", attachmentName
+        )));
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+        ResponseEntity<String> response = restTemplate.exchange(
+            BREVO_API_URL, HttpMethod.POST, request, String.class
+        );
+
+        log.info("Email with attachment sent via Brevo API to: {} - Status: {}", toEmail, response.getStatusCode());
+
+    } catch (Exception e) {
+        log.error("Failed to send email with attachment via Brevo API: {}", e.getMessage(), e);
+        throw new RuntimeException("Failed to send email with attachment", e);
+    }
+}
 }
