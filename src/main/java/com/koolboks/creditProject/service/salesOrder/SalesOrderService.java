@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class SalesOrderService {
@@ -20,6 +21,10 @@ public class SalesOrderService {
 
     @Value("${notification.email.from}")
     private String fromEmail;
+
+
+    @Value("${inventory.team.email}")
+    private String inventoryTeamEmail;
 
     public SalesOrderService(BrevoEmailService brevoEmailService) {
         this.brevoEmailService = brevoEmailService;
@@ -171,18 +176,51 @@ public class SalesOrderService {
     /**
      * Send Sales Order PDF to Agent
      */
+
+
     public void sendSalesOrderToAgent(Map<String, Object> orderData, byte[] pdfBytes) {
-        String htmlContent = buildAgentEmailContent(orderData);
+    String agentHtmlContent = buildAgentEmailContent(orderData);
+
+    // Send to agent with PDF attachment
+    CompletableFuture.runAsync(() -> {
         brevoEmailService.sendEmailWithAttachment(
             String.valueOf(orderData.get("agentEmail")),
             String.valueOf(orderData.get("agentName")),
             "📦 Sales Order Confirmed - Order ID: " + orderData.get("orderId"),
-            htmlContent,
+            agentHtmlContent,
             pdfBytes,
             "SalesOrder_" + orderData.get("orderId") + ".pdf"
         );
         System.out.println("Sales order sent to agent: " + orderData.get("agentEmail"));
-    }
+    });
+
+    // Send to inventory team simultaneously
+    CompletableFuture.runAsync(() -> {
+        brevoEmailService.sendEmailWithAttachment(
+            inventoryTeamEmail,
+            "Inventory Team",
+            "📦 Sales Order - Order ID: " + orderData.get("orderId"),
+            agentHtmlContent,
+            pdfBytes,
+            "SalesOrder_" + orderData.get("orderId") + ".pdf"
+        );
+        System.out.println("Sales order sent to inventory: " + inventoryTeamEmail);
+    });
+}
+
+
+//    public void sendSalesOrderToAgent(Map<String, Object> orderData, byte[] pdfBytes) {
+//        String htmlContent = buildAgentEmailContent(orderData);
+//        brevoEmailService.sendEmailWithAttachment(
+//            String.valueOf(orderData.get("agentEmail")),
+//            String.valueOf(orderData.get("agentName")),
+//            "📦 Sales Order Confirmed - Order ID: " + orderData.get("orderId"),
+//            htmlContent,
+//            pdfBytes,
+//            "SalesOrder_" + orderData.get("orderId") + ".pdf"
+//        );
+//        System.out.println("Sales order sent to agent: " + orderData.get("agentEmail"));
+//    }
 
     private String buildAgentEmailContent(Map<String, Object> data) {
         StringBuilder html = new StringBuilder();

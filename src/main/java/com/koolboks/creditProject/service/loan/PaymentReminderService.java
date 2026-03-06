@@ -489,13 +489,13 @@ import com.koolboks.creditProject.entity.paymentToken.PaymentToken;
 import com.koolboks.creditProject.repository.PaymentTokenRepository;
 import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
-import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+//import org.springframework.mail.javamail.JavaMailSender;
+//import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
+//import jakarta.mail.MessagingException;
+//import jakarta.mail.internet.MimeMessage;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -507,17 +507,15 @@ import java.util.Map;
 
 
 
+
+import com.koolboks.creditProject.service.BrevoEmailService;
+
+
 @Service
 public class PaymentReminderService {
 
-    @Autowired
-    private JavaMailSender mailSender;
-
-    @Autowired
-    private PaymentTokenRepository paymentTokenRepository;
-
-    @Value("${notification.email.from}")
-    private String fromEmail;
+    private final BrevoEmailService brevoEmailService;
+    private final PaymentTokenRepository paymentTokenRepository;
 
     @Value("${twilio.from.number}")
     private String twilioPhoneNumber;
@@ -525,9 +523,12 @@ public class PaymentReminderService {
     @Value("${frontend.base.url}")
     private String frontendBaseUrl;
 
-    /**
-     * Send payment reminder to customer and guarantor (both with buttons) + SMS
-     */
+    public PaymentReminderService(BrevoEmailService brevoEmailService,
+                                  PaymentTokenRepository paymentTokenRepository) {
+        this.brevoEmailService = brevoEmailService;
+        this.paymentTokenRepository = paymentTokenRepository;
+    }
+
     public void sendPaymentReminders(LoanRepayment loan, int instalmentNumber, LocalDate dueDate) {
         try {
             System.out.println("=== SENDING PAYMENT REMINDERS ===");
@@ -537,7 +538,6 @@ public class PaymentReminderService {
             System.out.println("Customer Email: " + loan.getEmail());
             System.out.println("Guarantor Email: " + loan.getGuarantorContact());
 
-            // Step 1: Create payment token DIRECTLY in Spring Boot database
             String paymentToken = createPaymentTokenInSpringBoot(loan, instalmentNumber, dueDate);
 
             if (paymentToken == null) {
@@ -547,10 +547,8 @@ public class PaymentReminderService {
 
             System.out.println("✅ Payment token created successfully: " + paymentToken);
 
-            // Step 2: Send reminders with token
             Map<String, Object> reminderData = buildReminderData(loan, instalmentNumber, dueDate, paymentToken);
 
-            // Send customer email
             try {
                 sendCustomerReminderEmail(reminderData);
                 System.out.println("✅ Customer email sent successfully");
@@ -559,7 +557,6 @@ public class PaymentReminderService {
                 e.printStackTrace();
             }
 
-            // Send guarantor email
             try {
                 sendGuarantorReminderEmail(reminderData);
                 System.out.println("✅ Guarantor email sent successfully");
@@ -568,7 +565,6 @@ public class PaymentReminderService {
                 e.printStackTrace();
             }
 
-            // Send customer SMS
             try {
                 sendCustomerReminderSms(reminderData);
                 System.out.println("✅ Customer SMS sent successfully");
@@ -585,23 +581,11 @@ public class PaymentReminderService {
         }
     }
 
-    /**
-     * Create payment token directly in Spring Boot database
-     */
     private String createPaymentTokenInSpringBoot(LoanRepayment loan, int instalmentNumber, LocalDate dueDate) {
         try {
             System.out.println("🔐 Creating payment token...");
-
-            // Calculate expiration date (31 days from today)
             LocalDateTime expirationDateTime = calculateExpirationDateTime(LocalDate.now());
 
-            System.out.println("Token details:");
-            System.out.println("  - Loan Reference: " + loan.getLoanReference());
-            System.out.println("  - Instalment: " + instalmentNumber);
-            System.out.println("  - Amount: " + loan.getMonthlyRepayment());
-            System.out.println("  - Expires: " + expirationDateTime);
-
-            // Create token entity
             PaymentToken paymentToken = new PaymentToken(
                 loan.getLoanReference(),
                 instalmentNumber,
@@ -609,13 +593,8 @@ public class PaymentReminderService {
                 expirationDateTime
             );
 
-            // Save to Spring Boot database
             PaymentToken savedToken = paymentTokenRepository.save(paymentToken);
-
-            System.out.println("✅ Payment token saved to database");
-            System.out.println("   Token: " + savedToken.getToken());
-            System.out.println("   Expires at: " + savedToken.getExpiresAt());
-
+            System.out.println("✅ Payment token saved: " + savedToken.getToken());
             return savedToken.getToken();
 
         } catch (Exception e) {
@@ -625,23 +604,16 @@ public class PaymentReminderService {
         }
     }
 
-    /**
-     * Calculate expiration date (calendar-aware)
-     */
     private LocalDateTime calculateExpirationDateTime(LocalDate startDate) {
         LocalDate expiration = startDate.plusDays(31);
-
-        // If expiration falls in February, limit to 29th
         if (expiration.getMonthValue() == 2 && expiration.getDayOfMonth() > 29) {
             expiration = LocalDate.of(expiration.getYear(), 2, 29);
         }
-
         return expiration.atTime(23, 59, 59);
     }
 
     private Map<String, Object> buildReminderData(LoanRepayment loan, int instalmentNumber, LocalDate dueDate, String token) {
         Map<String, Object> data = new HashMap<>();
-
         data.put("loanReference", loan.getLoanReference());
         data.put("instalmentNumber", instalmentNumber);
         data.put("customerName", loan.getFullName());
@@ -655,103 +627,289 @@ public class PaymentReminderService {
         data.put("dueDate", dueDate.format(DateTimeFormatter.ofPattern("MMMM dd, yyyy")));
         data.put("paymentToken", token);
         data.put("expirationDate", calculateExpirationDateTime(LocalDate.now()).toLocalDate().format(DateTimeFormatter.ofPattern("MMMM dd, yyyy")));
-
-        System.out.println("📋 Reminder data built:");
-        System.out.println("   Payment Token: " + token);
-        System.out.println("   Payment URL: " + frontendBaseUrl + "/repayment-payment?token=" + token);
-
+        System.out.println("📋 Payment URL: " + frontendBaseUrl + "/repayment-payment?token=" + token);
         return data;
     }
 
-    /**
-     * Send payment reminder email to CUSTOMER
-     */
     private void sendCustomerReminderEmail(Map<String, Object> data) {
-        try {
-            System.out.println("📧 Preparing customer reminder email...");
-
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            String customerEmail = (String) data.get("customerEmail");
-
-            System.out.println("   From: " + fromEmail);
-            System.out.println("   To: " + customerEmail);
-
-            helper.setFrom(fromEmail);
-            helper.setTo(customerEmail);
-
-            String instalmentOrdinal = getOrdinal((Integer) data.get("instalmentNumber"));
-            String subject = "💳 Payment Reminder: " + instalmentOrdinal + " Instalment Due Soon";
-
-            System.out.println("   Subject: " + subject);
-
-            helper.setSubject(subject);
-
-            String htmlContent = buildCustomerReminderEmail(data);
-            helper.setText(htmlContent, true);
-
-            System.out.println("📤 Sending customer email...");
-            mailSender.send(message);
-
-            System.out.println("✅ Customer reminder email sent to: " + customerEmail);
-
-        } catch (MessagingException e) {
-            System.err.println("❌ MessagingException in customer email: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Failed to send customer reminder email", e);
-        } catch (Exception e) {
-            System.err.println("❌ Exception in customer email: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Failed to send customer reminder email", e);
-        }
+        String instalmentOrdinal = getOrdinal((Integer) data.get("instalmentNumber"));
+        String htmlContent = buildCustomerReminderEmail(data);
+        brevoEmailService.sendEmail(
+            (String) data.get("customerEmail"),
+            "Customer",
+            "💳 Payment Reminder: " + instalmentOrdinal + " Instalment Due Soon",
+            htmlContent
+        );
+        System.out.println("✅ Customer reminder email sent to: " + data.get("customerEmail"));
     }
 
-    /**
-     * Send payment reminder email to GUARANTOR
-     */
     private void sendGuarantorReminderEmail(Map<String, Object> data) {
-        try {
-            System.out.println("📧 Preparing guarantor reminder email...");
-
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            String guarantorEmail = (String) data.get("guarantorEmail");
-
-            System.out.println("   From: " + fromEmail);
-            System.out.println("   To: " + guarantorEmail);
-
-            helper.setFrom(fromEmail);
-            helper.setTo(guarantorEmail);
-
-            String instalmentOrdinal = getOrdinal((Integer) data.get("instalmentNumber"));
-            String subject = "🔔 Payment Reminder for " + data.get("customerName") + " - " + instalmentOrdinal + " Instalment";
-
-            System.out.println("   Subject: " + subject);
-
-            helper.setSubject(subject);
-
-            String htmlContent = buildGuarantorReminderEmail(data);
-            helper.setText(htmlContent, true);
-
-            System.out.println("📤 Sending guarantor email...");
-            mailSender.send(message);
-
-            System.out.println("✅ Guarantor reminder email sent to: " + guarantorEmail);
-
-        } catch (MessagingException e) {
-            System.err.println("❌ MessagingException in guarantor email: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Failed to send guarantor reminder email", e);
-        } catch (Exception e) {
-            System.err.println("❌ Exception in guarantor email: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Failed to send guarantor reminder email", e);
-        }
+        String instalmentOrdinal = getOrdinal((Integer) data.get("instalmentNumber"));
+        String htmlContent = buildGuarantorReminderEmail(data);
+        brevoEmailService.sendEmail(
+            (String) data.get("guarantorEmail"),
+            "Guarantor",
+            "🔔 Payment Reminder for " + data.get("customerName") + " - " + instalmentOrdinal + " Instalment",
+            htmlContent
+        );
+        System.out.println("✅ Guarantor reminder email sent to: " + data.get("guarantorEmail"));
     }
 
-    // ... rest of your methods (buildCustomerReminderEmail, buildGuarantorReminderEmail, sendCustomerReminderSms, getOrdinal) remain the same
+    // keep sendCustomerReminderSms, buildCustomerReminderEmail,
+    // buildGuarantorReminderEmail, getOrdinal exactly as they are
+
+
+
+
+
+
+
+
+//@Service
+//public class PaymentReminderService {
+//
+//    @Autowired
+//    private JavaMailSender mailSender;
+//
+//    @Autowired
+//    private PaymentTokenRepository paymentTokenRepository;
+//
+//    @Value("${notification.email.from}")
+//    private String fromEmail;
+//
+//    @Value("${twilio.from.number}")
+//    private String twilioPhoneNumber;
+//
+//    @Value("${frontend.base.url}")
+//    private String frontendBaseUrl;
+//
+//    /**
+//     * Send payment reminder to customer and guarantor (both with buttons) + SMS
+//     */
+//    public void sendPaymentReminders(LoanRepayment loan, int instalmentNumber, LocalDate dueDate) {
+//        try {
+//            System.out.println("=== SENDING PAYMENT REMINDERS ===");
+//            System.out.println("Loan Reference: " + loan.getLoanReference());
+//            System.out.println("Instalment Number: " + instalmentNumber);
+//            System.out.println("Due Date: " + dueDate);
+//            System.out.println("Customer Email: " + loan.getEmail());
+//            System.out.println("Guarantor Email: " + loan.getGuarantorContact());
+//
+//            // Step 1: Create payment token DIRECTLY in Spring Boot database
+//            String paymentToken = createPaymentTokenInSpringBoot(loan, instalmentNumber, dueDate);
+//
+//            if (paymentToken == null) {
+//                System.err.println("❌ Failed to create payment token - ABORTING");
+//                return;
+//            }
+//
+//            System.out.println("✅ Payment token created successfully: " + paymentToken);
+//
+//            // Step 2: Send reminders with token
+//            Map<String, Object> reminderData = buildReminderData(loan, instalmentNumber, dueDate, paymentToken);
+//
+//            // Send customer email
+//            try {
+//                sendCustomerReminderEmail(reminderData);
+//                System.out.println("✅ Customer email sent successfully");
+//            } catch (Exception e) {
+//                System.err.println("❌ Failed to send customer email: " + e.getMessage());
+//                e.printStackTrace();
+//            }
+//
+//            // Send guarantor email
+//            try {
+//                sendGuarantorReminderEmail(reminderData);
+//                System.out.println("✅ Guarantor email sent successfully");
+//            } catch (Exception e) {
+//                System.err.println("❌ Failed to send guarantor email: " + e.getMessage());
+//                e.printStackTrace();
+//            }
+//
+//            // Send customer SMS
+//            try {
+//                sendCustomerReminderSms(reminderData);
+//                System.out.println("✅ Customer SMS sent successfully");
+//            } catch (Exception e) {
+//                System.err.println("❌ Failed to send customer SMS: " + e.getMessage());
+//                e.printStackTrace();
+//            }
+//
+//            System.out.println("=== PAYMENT REMINDERS PROCESS COMPLETED ===");
+//
+//        } catch (Exception e) {
+//            System.err.println("❌ Error sending payment reminders: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
+
+//    /**
+//     * Create payment token directly in Spring Boot database
+//     */
+//    private String createPaymentTokenInSpringBoot(LoanRepayment loan, int instalmentNumber, LocalDate dueDate) {
+//        try {
+//            System.out.println("🔐 Creating payment token...");
+//
+//            // Calculate expiration date (31 days from today)
+//            LocalDateTime expirationDateTime = calculateExpirationDateTime(LocalDate.now());
+//
+//            System.out.println("Token details:");
+//            System.out.println("  - Loan Reference: " + loan.getLoanReference());
+//            System.out.println("  - Instalment: " + instalmentNumber);
+//            System.out.println("  - Amount: " + loan.getMonthlyRepayment());
+//            System.out.println("  - Expires: " + expirationDateTime);
+//
+//            // Create token entity
+//            PaymentToken paymentToken = new PaymentToken(
+//                loan.getLoanReference(),
+//                instalmentNumber,
+//                loan.getMonthlyRepayment(),
+//                expirationDateTime
+//            );
+//
+//            // Save to Spring Boot database
+//            PaymentToken savedToken = paymentTokenRepository.save(paymentToken);
+//
+//            System.out.println("✅ Payment token saved to database");
+//            System.out.println("   Token: " + savedToken.getToken());
+//            System.out.println("   Expires at: " + savedToken.getExpiresAt());
+//
+//            return savedToken.getToken();
+//
+//        } catch (Exception e) {
+//            System.err.println("❌ Error creating payment token: " + e.getMessage());
+//            e.printStackTrace();
+//            return null;
+//        }
+//    }
+//
+//    /**
+//     * Calculate expiration date (calendar-aware)
+//     */
+//    private LocalDateTime calculateExpirationDateTime(LocalDate startDate) {
+//        LocalDate expiration = startDate.plusDays(31);
+//
+//        // If expiration falls in February, limit to 29th
+//        if (expiration.getMonthValue() == 2 && expiration.getDayOfMonth() > 29) {
+//            expiration = LocalDate.of(expiration.getYear(), 2, 29);
+//        }
+//
+//        return expiration.atTime(23, 59, 59);
+//    }
+//
+//    private Map<String, Object> buildReminderData(LoanRepayment loan, int instalmentNumber, LocalDate dueDate, String token) {
+//        Map<String, Object> data = new HashMap<>();
+//
+//        data.put("loanReference", loan.getLoanReference());
+//        data.put("instalmentNumber", instalmentNumber);
+//        data.put("customerName", loan.getFullName());
+//        data.put("customerEmail", loan.getEmail());
+//        data.put("customerPhone", loan.getPhone());
+//        data.put("guarantorEmail", loan.getGuarantorContact());
+//        data.put("monthlyRepayment", loan.getMonthlyRepayment());
+//        data.put("amountPaid", loan.getAmountPaid());
+//        data.put("remainingBalance", loan.getRemainingBalance());
+//        data.put("totalInstalments", loan.getNumberOfMonths());
+//        data.put("dueDate", dueDate.format(DateTimeFormatter.ofPattern("MMMM dd, yyyy")));
+//        data.put("paymentToken", token);
+//        data.put("expirationDate", calculateExpirationDateTime(LocalDate.now()).toLocalDate().format(DateTimeFormatter.ofPattern("MMMM dd, yyyy")));
+//
+//        System.out.println("📋 Reminder data built:");
+//        System.out.println("   Payment Token: " + token);
+//        System.out.println("   Payment URL: " + frontendBaseUrl + "/repayment-payment?token=" + token);
+//
+//        return data;
+//    }
+//
+//    /**
+//     * Send payment reminder email to CUSTOMER
+//     */
+//    private void sendCustomerReminderEmail(Map<String, Object> data) {
+//        try {
+//            System.out.println("📧 Preparing customer reminder email...");
+//
+//            MimeMessage message = mailSender.createMimeMessage();
+//            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+//
+//            String customerEmail = (String) data.get("customerEmail");
+//
+//            System.out.println("   From: " + fromEmail);
+//            System.out.println("   To: " + customerEmail);
+//
+//            helper.setFrom(fromEmail);
+//            helper.setTo(customerEmail);
+//
+//            String instalmentOrdinal = getOrdinal((Integer) data.get("instalmentNumber"));
+//            String subject = "💳 Payment Reminder: " + instalmentOrdinal + " Instalment Due Soon";
+//
+//            System.out.println("   Subject: " + subject);
+//
+//            helper.setSubject(subject);
+//
+//            String htmlContent = buildCustomerReminderEmail(data);
+//            helper.setText(htmlContent, true);
+//
+//            System.out.println("📤 Sending customer email...");
+//            mailSender.send(message);
+//
+//            System.out.println("✅ Customer reminder email sent to: " + customerEmail);
+//
+//        } catch (MessagingException e) {
+//            System.err.println("❌ MessagingException in customer email: " + e.getMessage());
+//            e.printStackTrace();
+//            throw new RuntimeException("Failed to send customer reminder email", e);
+//        } catch (Exception e) {
+//            System.err.println("❌ Exception in customer email: " + e.getMessage());
+//            e.printStackTrace();
+//            throw new RuntimeException("Failed to send customer reminder email", e);
+//        }
+//    }
+//
+//    /**
+//     * Send payment reminder email to GUARANTOR
+//     */
+//    private void sendGuarantorReminderEmail(Map<String, Object> data) {
+//        try {
+//            System.out.println("📧 Preparing guarantor reminder email...");
+//
+//            MimeMessage message = mailSender.createMimeMessage();
+//            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+//
+//            String guarantorEmail = (String) data.get("guarantorEmail");
+//
+//            System.out.println("   From: " + fromEmail);
+//            System.out.println("   To: " + guarantorEmail);
+//
+//            helper.setFrom(fromEmail);
+//            helper.setTo(guarantorEmail);
+//
+//            String instalmentOrdinal = getOrdinal((Integer) data.get("instalmentNumber"));
+//            String subject = "🔔 Payment Reminder for " + data.get("customerName") + " - " + instalmentOrdinal + " Instalment";
+//
+//            System.out.println("   Subject: " + subject);
+//
+//            helper.setSubject(subject);
+//
+//            String htmlContent = buildGuarantorReminderEmail(data);
+//            helper.setText(htmlContent, true);
+//
+//            System.out.println("📤 Sending guarantor email...");
+//            mailSender.send(message);
+//
+//            System.out.println("✅ Guarantor reminder email sent to: " + guarantorEmail);
+//
+//        } catch (MessagingException e) {
+//            System.err.println("❌ MessagingException in guarantor email: " + e.getMessage());
+//            e.printStackTrace();
+//            throw new RuntimeException("Failed to send guarantor reminder email", e);
+//        } catch (Exception e) {
+//            System.err.println("❌ Exception in guarantor email: " + e.getMessage());
+//            e.printStackTrace();
+//            throw new RuntimeException("Failed to send guarantor reminder email", e);
+//        }
+//    }
+//
+//    // ... rest of your methods (buildCustomerReminderEmail, buildGuarantorReminderEmail, sendCustomerReminderSms, getOrdinal) remain the same
 
 
 
