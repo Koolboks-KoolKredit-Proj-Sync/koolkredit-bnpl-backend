@@ -35,6 +35,11 @@ public class GuarantorRequest {
     private String guarantorNin;
     private String guarantorEmail;
 
+
+
+
+    private String selfieImagePath;
+
     // ===================================
     // GETTERS AND SETTERS
     // ===================================
@@ -85,6 +90,20 @@ public class GuarantorRequest {
 
     public void setCustomerInstallmentDuration(String customerInstallmentDuration) {
         this.customerInstallmentDuration = customerInstallmentDuration;
+    }
+
+    public String getSelfieImagePath() {
+        return selfieImagePath;
+    }
+
+    public void setSelfieImagePath(String selfieImagePath) {
+        this.selfieImagePath = selfieImagePath;
+    }
+
+     public GuarantorRequest() {}  // ← add this
+
+     public GuarantorRequest(String selfieImagePath) {
+        this.selfieImagePath = selfieImagePath;
     }
 
     // ✅ ACCEPT BOTH "customerPhone" AND "customer_phone_number"
