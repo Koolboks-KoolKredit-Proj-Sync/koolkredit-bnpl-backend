@@ -3,7 +3,6 @@ package com.koolboks.creditProject.controller;
 import com.koolboks.creditProject.dto.GuarantorRequest;
 import com.koolboks.creditProject.service.GuarantorService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -57,7 +56,7 @@ public class GuarantorController {
     /**
      * Step 3: Guarantor submits their form (multipart to support selfie upload)
      */
-    @PostMapping(value = "/submit/{token}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping("/submit/{token}")
     public ResponseEntity<Map<String, Object>> submitGuarantorForm(
             @PathVariable String token,
             @RequestParam("guarantorBvn") String guarantorBvn,
