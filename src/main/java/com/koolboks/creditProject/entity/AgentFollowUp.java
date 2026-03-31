@@ -89,6 +89,72 @@ public class AgentFollowUp {
     @OneToOne(mappedBy = "agentFollowUp", fetch = FetchType.LAZY)
     private Guarantor guarantor;
 
+    @Column(name = "review_token", unique = true)
+    private String reviewToken;
+
+    @Column(name = "credit_report_json", columnDefinition = "TEXT")
+    private String creditReportJson;       // stored at submission, shown on admin page
+
+    @Column(name = "admin_reviewed")
+    private boolean adminReviewed = false;
+
+    public String getAdminDecision() {
+        return adminDecision;
+    }
+
+    public void setAdminDecision(String adminDecision) {
+        this.adminDecision = adminDecision;
+    }
+
+    public String getAdminNotes() {
+        return adminNotes;
+    }
+
+    public void setAdminNotes(String adminNotes) {
+        this.adminNotes = adminNotes;
+    }
+
+    public boolean isAdminReviewed() {
+        return adminReviewed;
+    }
+
+    public void setAdminReviewed(boolean adminReviewed) {
+        this.adminReviewed = adminReviewed;
+    }
+
+    public String getCreditReportJson() {
+        return creditReportJson;
+    }
+
+    public void setCreditReportJson(String creditReportJson) {
+        this.creditReportJson = creditReportJson;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
+    }
+
+    public String getReviewToken() {
+        return reviewToken;
+    }
+
+    public void setReviewToken(String reviewToken) {
+        this.reviewToken = reviewToken;
+    }
+
+    @Column(name = "admin_decision")
+    private String adminDecision;          // "APPROVED" | "REJECTED"
+
+    @Column(name = "admin_notes", columnDefinition = "TEXT")
+    private String adminNotes;
+
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
 //    @OneToOne(mappedBy = "agentFollowUp", fetch = FetchType.LAZY)
 //    private Guarantor guarantorByMobile;
 

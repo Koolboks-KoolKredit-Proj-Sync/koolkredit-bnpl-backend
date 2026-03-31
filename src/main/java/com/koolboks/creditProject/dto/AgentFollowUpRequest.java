@@ -143,6 +143,9 @@ public class AgentFollowUpRequest {
     public void setMonthlyGrossIncome(Double income) {
         this.monthlyIncome = income;
     }
+
+    public void setCreditReportJson(String creditReportJson) {
+    }
 }
 
 
