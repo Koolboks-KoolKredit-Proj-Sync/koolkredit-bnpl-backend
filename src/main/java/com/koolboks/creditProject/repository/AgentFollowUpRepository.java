@@ -18,6 +18,7 @@ public interface AgentFollowUpRepository extends JpaRepository<AgentFollowUp, Lo
     Optional<AgentFollowUp> findByMobileNumber(String mobileNumber);
 
     Optional<AgentFollowUp> findByReviewToken(String reviewToken);
+    
 }
 
 
