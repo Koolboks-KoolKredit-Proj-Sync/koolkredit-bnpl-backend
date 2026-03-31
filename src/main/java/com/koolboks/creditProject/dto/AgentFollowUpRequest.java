@@ -31,6 +31,23 @@ public class AgentFollowUpRequest {
     // File upload
     private MultipartFile utilityBill;  // IMPORTANT
 
+
+    // ── NEW fields ────────────────────────────────────────────────────────────
+    /** Customer first name — forwarded from the entry form. */
+    private String firstName;
+
+    /** Customer last name — forwarded from the entry form. */
+    private String lastName;
+
+    /**
+     * JSON string produced by the Mono Connect flow on the frontend.
+     * Contains: accountId, account (balance/name/institution),
+     *           credits[], debits[], creditTotal, debitTotal.
+     * Null/blank when the agent did not complete the bank-statement step.
+     */
+    private String monoFinancialDataJson;
+
+
     public AgentFollowUpRequest() {}
 
     // -------------------------------------------------------------------------
@@ -92,6 +109,17 @@ public class AgentFollowUpRequest {
 
     public MultipartFile getUtilityBill() { return utilityBill; }
     public void setUtilityBill(MultipartFile utilityBill) { this.utilityBill = utilityBill; }
+
+
+    // NEW
+    public String getFirstName()                      { return firstName; }
+    public void   setFirstName(String v)              { this.firstName = v; }
+
+    public String getLastName()                       { return lastName; }
+    public void   setLastName(String v)               { this.lastName = v; }
+
+    public String getMonoFinancialDataJson()              { return monoFinancialDataJson; }
+    public void   setMonoFinancialDataJson(String v)      { this.monoFinancialDataJson = v; }
 
 //    public MultipartFile getUtilityBill() { return utilityBill; }
 //    public void setUtilityBill(MultipartFile utilityBill) { this.utilityBill = utilityBill; }

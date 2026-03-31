@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import java.util.Base64;
+
 @Service
 public class BrevoEmailService {
 
@@ -103,4 +105,49 @@ public class BrevoEmailService {
         throw new RuntimeException("Failed to send email with attachment", e);
     }
 }
+//public void sendAnotherEmailWithAttachment(String toEmail,
+//                                        String toName,
+//                                        String subject,
+//                                        String textContent,
+//                                        byte[] attachmentBytes,
+//                                        String attachmentName) {
+//        try {
+//            String base64Content = Base64.getEncoder().encodeToString(attachmentBytes);
+//
+//            Map<String, Object> payload = Map.of(
+//                "sender",  Map.of("name", "Koolboks System", "email", "no-reply@koolboks.com"),
+//                "to",      List.of(Map.of("email", toEmail, "name", toName)),
+//                "subject", subject,
+//                "textContent", textContent,
+//                "attachment", List.of(
+//                    Map.of(
+//                        "content", base64Content,
+//                        "name",    attachmentName
+//                    )
+//                )
+//            );
+//
+//            HttpHeaders headers = new HttpHeaders();
+//            headers.setContentType(MediaType.APPLICATION_JSON);
+//            headers.set("api-key", brevoApiKey);
+//
+//            HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
+//
+//            ResponseEntity<String> response = restTemplate.postForEntity(
+//                    "https://api.brevo.com/v3/smtp/email",
+//                    request,
+//                    String.class
+//            );
+//
+//            if (response.getStatusCode().is2xxSuccessful()) {
+//                log.info("Email with attachment '{}' sent to: {}", attachmentName, toEmail);
+//            } else {
+//                log.error("Brevo API returned non-2xx status {} for attachment email",
+//                        response.getStatusCode());
+//            }
+//
+//        } catch (Exception e) {
+//            log.error("Failed to send email with attachment to {}: {}", toEmail, e.getMessage(), e);
+//        }
+//    }
 }
