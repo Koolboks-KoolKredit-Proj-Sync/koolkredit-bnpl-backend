@@ -11,7 +11,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/config")
-//@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*")
 public class ApiKeyController {
 
     private final ApiKeyService apiKeyService;
